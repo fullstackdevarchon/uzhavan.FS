@@ -1,0 +1,288 @@
+// src/pages/Login.jsx
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import Cookies from "js-cookie";
+import { Footer, Navbar } from "../components";
+
+const Login = () => {
+  const navigate = useNavigate();
+  const { role } = useParams(); // ✅ role from URL: buyer | seller | admin
+
+  const [isRegister, setIsRegister] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // ✅ Validate role
+  const allowedRoles = ["buyer", "seller", "admin"];
+  const currentRole = allowedRoles.includes(role) ? role : "buyer";
+
+  // ✅ Check if already logged in
+  useEffect(() => {
+    console.log("Checking authentication...");
+    
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    const savedRole = localStorage.getItem("role") || Cookies.get("role");
+    
+    console.log("Stored user:", user);
+    console.log("Saved role:", savedRole);
+
+    if (user && savedRole) {
+      console.log("User is authenticated, determining redirect path...");
+      let path;
+      if (savedRole === "admin") {
+        path = "/admin/dashboard";
+      } else if (savedRole === "seller") {
+        path = "/seller/dashboard";
+      } else {
+        path = "/buyer-dashboard";
+      }
+      
+      console.log("Redirecting to:", path);
+      navigate(path, { replace: true });
+    } else {
+      console.log("No authenticated user found");
+    }
+    
+    setAuthChecked(true);
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    
+    // Reset any existing auth data
+    localStorage.clear();
+    Cookies.remove('role', { path: '/' });
+    Cookies.remove('token', { path: '/' });
+
+    try {
+      const url = `http://localhost:5000/api/users${
+        isRegister ? "/register" : "/login"
+      }`;
+
+      const payload = isRegister
+        ? { fullName, email, pass: password, role: currentRole }
+        : { email, pass: password, role: currentRole };
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || "Something went wrong");
+        return;
+      }
+
+      if (!isRegister && data.user) {
+        console.log("Login successful", data.user);
+        
+        // First, clear any existing data
+        localStorage.clear();
+        Cookies.remove('role');
+        Cookies.remove('token');
+        
+        // Then set new data
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("role", data.user.role);
+        
+        // Set cookies with proper configuration
+        Cookies.set("role", data.user.role, { 
+          expires: 1,
+          path: '/',
+          secure: false,
+          sameSite: 'Lax'
+        });
+        
+        // Always set a token even if not provided by backend
+        Cookies.set("token", data.token || "temptoken", {
+          expires: 1,
+          path: '/',
+          secure: false,
+          sameSite: 'Lax'
+        });
+
+        // Verify storage
+        const verifyUser = localStorage.getItem("user");
+        const verifyRole = Cookies.get("role");
+        const verifyToken = Cookies.get("token");
+        
+        console.log("Storage verification:", {
+          user: verifyUser ? JSON.parse(verifyUser) : null,
+          role: verifyRole,
+          token: verifyToken
+        });
+
+        // Only navigate if storage is verified
+        if (verifyUser && verifyRole && verifyToken) {
+          const path = data.user.role === "admin" 
+            ? "/admin/dashboard"
+            : data.user.role === "seller"
+              ? "/seller/dashboard"
+              : "/buyer-dashboard";
+
+          console.log("Storage verified, navigating to:", path);
+          // Force a small delay to ensure storage is committed
+          setTimeout(() => {
+            navigate(path, { replace: true });
+          }, 100);
+        } else {
+          throw new Error("Storage verification failed");
+        }
+            secure: false, // set to true in production
+            sameSite: 'Lax'
+          });
+        }
+
+        // Determine the correct path based on role
+        let path;
+        if (data.user.role === "admin") {
+          path = "/admin/dashboard";
+        } else if (data.user.role === "seller") {
+          path = "/seller/dashboard"; // This will resolve to /seller/dashboard in the router
+        } else {
+          path = "/buyer-dashboard";
+        }
+
+        console.log("Login successful - Role:", data.user.role);
+        console.log("Navigating to:", path);
+        
+        // Immediate navigation
+        navigate(path, { replace: true });
+        return;
+      }
+
+      if (isRegister) {
+        setSuccess("Registration successful! Redirecting to login...");
+        setTimeout(() => setIsRegister(false), 1500);
+      }
+    } catch (err) {
+      setError("Server error. Try again later.");
+    }
+  };
+
+  if (!authChecked) return null;
+
+  return (
+    <>
+      <Navbar />
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 pt-20 pb-10">
+        <div className="w-full max-w-lg bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl p-8 border border-gray-200">
+          <h1 className="text-4xl font-extrabold text-center text-green-800 mb-2">
+            {isRegister ? "Create Account" : "Welcome Back"}
+          </h1>
+          <p className="text-center text-gray-600 mb-8 capitalize">
+            {isRegister
+              ? `Register as ${currentRole}`
+              : `Login as ${currentRole}`}
+          </p>
+          <hr className="mb-8 border-gray-300" />
+
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-100 text-red-700 px-4 py-3 text-center font-medium">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 rounded-lg bg-green-100 text-green-700 px-4 py-3 text-center font-medium animate-pulse">
+              {success}
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Registration requires full name (except admin) */}
+            {isRegister && currentRole !== "admin" && (
+              <div className="flex flex-col">
+                <label className="mb-2 font-semibold text-gray-700">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600"
+                  required
+                />
+              </div>
+            )}
+
+            <div className="flex flex-col">
+              <label className="mb-2 font-semibold text-gray-700">
+                Email Address
+              </label>
+              <input
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="mb-2 font-semibold text-gray-700">Password</label>
+              <input
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600"
+                required
+              />
+            </div>
+
+            {/* Toggle between login/register */}
+            <div className="text-sm text-gray-600 text-center">
+              {isRegister ? (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsRegister(false)}
+                    className="font-semibold text-green-600 hover:underline"
+                  >
+                    Login
+                  </button>
+                </>
+              ) : currentRole !== "admin" ? (
+                <>
+                  New here?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsRegister(true)}
+                    className="font-semibold text-green-600 hover:underline"
+                  >
+                    Register
+                  </button>
+                </>
+              ) : null}
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                className="w-full bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-green-700 transition"
+              >
+                {isRegister ? "Register" : "Login"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+};
+
+export default Login;

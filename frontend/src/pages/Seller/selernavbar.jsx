@@ -30,7 +30,7 @@ const SellerNavbar = () => {
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between">
           {/* Left: Logo + Title clickable */}
           <Link
-            to="/seller-dashboard"
+            to="/seller"
             className="flex items-center gap-3 w-full md:w-auto mb-3 md:mb-0 justify-center md:justify-start"
           >
             <img
@@ -46,21 +46,21 @@ const SellerNavbar = () => {
           {/* Desktop Nav */}
           <div className="hidden md:flex gap-6 font-medium text-white">
             <NavLink
-              to="/seller-dashboard/add-product"
+              to="/seller/add-product"
               className={navLinkClass}
             >
               <FaPlusCircle className="inline mr-1" /> Add Product
             </NavLink>
 
             <NavLink
-              to="/seller-dashboard/my-products"
+              to="/seller/my-products"
               className={navLinkClass}
             >
               <FaBoxOpen className="inline mr-1" /> My Products
             </NavLink>
 
             <NavLink
-              to="/seller-dashboard/check-status"
+              to="/seller/check-status"
               className={navLinkClass}
             >
               <FaClipboardCheck className="inline mr-1" /> Check Status
@@ -77,21 +77,21 @@ const SellerNavbar = () => {
           {/* Mobile Nav (horizontal buttons) */}
           <div className="flex md:hidden justify-around w-full mt-3 border-t border-white/20 pt-2">
             <NavLink
-              to="/seller-dashboard/add-product"
+              to="/seller/add-product"
               className={navLinkClass}
             >
               <FaPlusCircle className="inline mr-1" /> Add
             </NavLink>
 
             <NavLink
-              to="/seller-dashboard/my-products"
+              to="/seller/my-products"
               className={navLinkClass}
             >
               <FaBoxOpen className="inline mr-1" /> My
             </NavLink>
 
             <NavLink
-              to="/seller-dashboard/check-status"
+              to="/seller/check-status"
               className={navLinkClass}
             >
               <FaClipboardCheck className="inline mr-1" /> Status

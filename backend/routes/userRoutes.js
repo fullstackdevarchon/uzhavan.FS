@@ -1,12 +1,24 @@
+// routes/user.routes.js
 import express from "express";
-import { getUsers, createUser } from "../controller/user.controller.js";
+import {
+  getUsers,
+  registerUser,
+  loginUser,
+  logoutUser,
+} from "../controller/user.controller.js";
 
 const router = express.Router();
 
-// GET all users
+// ✅ GET all users (without passwords)
 router.get("/", getUsers);
 
-// POST new user
-router.post("/", createUser);
+// ✅ Register new user
+router.post("/register", registerUser);
+
+// ✅ Login user (sets cookie)
+router.post("/login", loginUser);
+
+// ✅ Logout user (clears cookie)
+router.post("/logout", logoutUser);
 
 export default router;

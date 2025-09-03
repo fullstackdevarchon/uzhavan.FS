@@ -17,12 +17,17 @@ const AdminNavbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    navigate("/login");
+    // Clear all auth data
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    localStorage.removeItem("token");
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    navigate("/login/admin");
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="mt-24 flex flex-col">
       {/* Fixed Top Navbar */}
       <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-lg px-6 py-4 flex items-center justify-between z-50">
         {/* Logo + Title wrapped in Link to Admin Dashboard */}
@@ -40,7 +45,7 @@ const AdminNavbar = () => {
         {/* Desktop Links */}
         <div className="hidden md:flex gap-6 text-white font-medium text-lg">
           <Link
-            to="/admin-dashboard/product-list"
+            to="/admin-dashboard/products"
             className="flex items-center gap-2 relative group"
           >
             <FaBoxOpen />
@@ -147,9 +152,9 @@ const AdminNavbar = () => {
       )}
 
       {/* Content Area with top padding (because navbar is fixed) */}
-      <main className="flex-1 p-6 bg-gray-50 mt-[88px]">
+      {/* <main className="flex-1 p-6 bg-gray-50 mt-[88px]">
         <Outlet />
-      </main>
+      </main> */}
     </div>
   );
 };

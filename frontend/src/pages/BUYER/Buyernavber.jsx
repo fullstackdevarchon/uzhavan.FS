@@ -26,15 +26,15 @@ const BuyerNavbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    navigate("/login/buyer", { replace: true }); // ✅ safer redirect
   };
 
   const navLinkClass = ({ isActive }) =>
     `relative px-2 transition-colors duration-300 flex items-center gap-2 ${
       isActive
-        ? "text-yellow-500 font-semibold after:w-full"
+        ? "text-yellow-400 font-semibold after:w-full"
         : "text-white hover:text-yellow-400 after:w-0"
-    } after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-yellow-500 after:transition-all`;
+    } after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-yellow-400 after:transition-all`;
 
   const iconCircleClass =
     "p-1 rounded-full bg-white/20 text-white flex items-center justify-center text-base";
@@ -44,8 +44,11 @@ const BuyerNavbar = () => {
       {/* Navbar */}
       <nav className="bg-green-600 fixed top-0 left-0 w-full shadow-md z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Left: Logo + Title wrapped in Link to Buyer Dashboard */}
-          <Link to="/buyer-dashboard" className="flex items-center gap-3 flex-shrink-0">
+          {/* Left: Logo + Title */}
+          <Link
+            to="/buyer-dashboard"
+            className="flex items-center gap-3 flex-shrink-0"
+          >
             <img
               src="/assets/logo.png"
               alt="Logo"
@@ -59,7 +62,7 @@ const BuyerNavbar = () => {
           {/* Desktop Nav */}
           <ul className="hidden md:flex items-center space-x-6 font-medium">
             <li>
-              <NavLink to="products" className={navLinkClass}>
+              <NavLink to="/buyer-dashboard/products" className={navLinkClass}>
                 <span className={iconCircleClass}>
                   <FaBoxOpen />
                 </span>
@@ -67,7 +70,7 @@ const BuyerNavbar = () => {
               </NavLink>
             </li>
             <li>
-              <NavLink to="orders" className={navLinkClass}>
+              <NavLink to="/buyer-dashboard/orders" className={navLinkClass}>
                 <span className={iconCircleClass}>
                   <FaClipboardList />
                 </span>
@@ -75,21 +78,21 @@ const BuyerNavbar = () => {
               </NavLink>
             </li>
             <li>
-              <NavLink to="cart" className={navLinkClass}>
+              <NavLink to="/buyer-dashboard/cart" className={navLinkClass}>
                 <span className={iconCircleClass}>
                   <FaShoppingCart />
                 </span>
                 {loading ? (
                   <Skeleton width={40} height={20} baseColor="#cbd5e1" />
                 ) : (
-                  <>Cart ({cartState.length})</>
+                  <>Cart ({cartState?.length || 0})</>
                 )}
               </NavLink>
             </li>
             <li>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 text-red-400 hover:text-red-200 font-semibold transition-colors focus:outline-none"
+                className="flex items-center gap-2 text-red-300 hover:text-red-200 font-semibold transition-colors focus:outline-none"
               >
                 <span className={iconCircleClass}>
                   <FaSignOutAlt />
@@ -117,8 +120,8 @@ const BuyerNavbar = () => {
               className={({ isActive }) =>
                 `block py-3 flex items-center gap-2 ${
                   isActive
-                    ? "text-yellow-500 font-semibold"
-                    : "text-white hover:text-yellow-400"
+                    ? "text-yellow-400 font-semibold"
+                    : "text-white hover:text-yellow-300"
                 }`
               }
             >
@@ -127,14 +130,15 @@ const BuyerNavbar = () => {
               </span>
               Products
             </NavLink>
+
             <NavLink
               to="orders"
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
                 `block py-3 flex items-center gap-2 ${
                   isActive
-                    ? "text-yellow-500 font-semibold"
-                    : "text-white hover:text-yellow-400"
+                    ? "text-yellow-400 font-semibold"
+                    : "text-white hover:text-yellow-300"
                 }`
               }
             >
@@ -143,14 +147,15 @@ const BuyerNavbar = () => {
               </span>
               My Orders
             </NavLink>
+
             <NavLink
               to="cart"
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
                 `block py-3 flex items-center gap-2 ${
                   isActive
-                    ? "text-yellow-500 font-semibold"
-                    : "text-white hover:text-yellow-400"
+                    ? "text-yellow-400 font-semibold"
+                    : "text-white hover:text-yellow-300"
                 }`
               }
             >
@@ -160,15 +165,16 @@ const BuyerNavbar = () => {
               {loading ? (
                 <Skeleton width={40} height={20} baseColor="#cbd5e1" />
               ) : (
-                <>Cart ({cartState.length})</>
+                <>Cart ({cartState?.length || 0})</>
               )}
             </NavLink>
+
             <button
               onClick={() => {
                 handleLogout();
                 setIsOpen(false);
               }}
-              className="block py-3 w-full text-left flex items-center gap-2 text-red-400 hover:text-red-200 font-semibold transition-colors focus:outline-none"
+              className="block py-3 w-full text-left flex items-center gap-2 text-red-300 hover:text-red-200 font-semibold transition-colors focus:outline-none"
             >
               <span className={iconCircleClass}>
                 <FaSignOutAlt />
@@ -179,9 +185,9 @@ const BuyerNavbar = () => {
         )}
       </nav>
 
-      {/* Content */}
+      {/* Content Area */}
       <main className="flex-1 p-6 bg-gray-50 mt-20">
-        <Outlet />
+        <Outlet /> {/* ✅ REQUIRED for nested routing */}
       </main>
     </div>
   );
