@@ -17,7 +17,7 @@ const Login = () => {
   const [authChecked, setAuthChecked] = useState(false);
 
   // Validate role
-  const allowedRoles = ["buyer", "seller", "admin"];
+  const allowedRoles = ["buyer", "seller"];
   const currentRole = allowedRoles.includes(role) ? role : "buyer";
 
   // Handle successful login
@@ -57,11 +57,9 @@ const Login = () => {
       }
 
       // Navigate to dashboard
-      const path = user.role === "admin" 
-        ? "/admin/dashboard"
-        : user.role === "seller"
-          ? "/seller/dashboard"
-          : "/buyer-dashboard";
+      const path = user.role === "seller" 
+        ? "/seller/dashboard"
+        : "/buyer-dashboard";
 
       console.log("Storage verified, navigating to:", path);
       navigate(path, { replace: true });
@@ -123,11 +121,9 @@ const Login = () => {
       console.log("Auth check:", { user, savedRole, token });
 
       if (user && savedRole && token) {
-        const path = savedRole === "admin"
-          ? "/admin/dashboard"
-          : savedRole === "seller"
-            ? "/seller/dashboard"
-            : "/buyer-dashboard";
+        const path = savedRole === "seller"
+          ? "/seller/dashboard"
+          : "/buyer-dashboard";
         navigate(path, { replace: true });
       }
     };
@@ -165,7 +161,7 @@ const Login = () => {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {isRegister && currentRole !== "admin" && (
+            {isRegister && (
               <div className="flex flex-col">
                 <label className="mb-2 font-semibold text-gray-700">
                   Full Name
@@ -219,7 +215,7 @@ const Login = () => {
                     Login
                   </button>
                 </>
-              ) : currentRole !== "admin" ? (
+              ) : (
                 <>
                   New here?{" "}
                   <button
@@ -230,7 +226,7 @@ const Login = () => {
                     Register
                   </button>
                 </>
-              ) : null}
+              )}
             </div>
 
             <div className="flex justify-center">

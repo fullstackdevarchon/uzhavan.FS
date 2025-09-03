@@ -12,12 +12,14 @@ import {
 } from "react-icons/fa";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { logout, getCurrentUser } from "../../utils/auth";
 
 const BuyerNavbar = () => {
   const navigate = useNavigate();
   const cartState = useSelector((state) => state.handleCart);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const currentUser = getCurrentUser();
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
@@ -25,8 +27,8 @@ const BuyerNavbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login/buyer", { replace: true }); // ✅ safer redirect
+    console.log("🔓 Buyer logout initiated");
+    logout(); // This will clear all auth data and redirect
   };
 
   const navLinkClass = ({ isActive }) =>

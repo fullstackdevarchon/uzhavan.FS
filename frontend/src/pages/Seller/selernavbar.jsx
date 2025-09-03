@@ -7,13 +7,15 @@ import {
   FaBoxOpen,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { logout, getCurrentUser } from "../../utils/auth";
 
 const SellerNavbar = () => {
   const navigate = useNavigate();
+  const currentUser = getCurrentUser();
 
   const handleLogout = () => {
-    localStorage.removeItem("sellerToken");
-    navigate("/login");
+    console.log("🔓 Seller logout initiated");
+    logout(); // This will clear all auth data and redirect
   };
 
   const navLinkClass = ({ isActive }) =>

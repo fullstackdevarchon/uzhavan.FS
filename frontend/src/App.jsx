@@ -1,28 +1,12 @@
-// src/App.jsx
 import React from "react";
 import { Routes, Route, Navigate, useParams, Outlet } from "react-router-dom";
 import Cookies from "js-cookie";
-        <Route path="/admin-dashboard/*" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <div>
-              <AdminNavbar />
-              <Routes>
-                <Route index element={<AdminDashboard />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="products" element={<ProductListAdmin />} />
-                <Route path="seller-requests" element={<SellerRequests />} />
-                <Route path="inventory" element={<Inventory />} />
-                <Route path="orders" element={<Orders />} />
-              </Routes>
-            </div>
-          </ProtectedRoute>
-        } />// Public Pages
-import { Home, Product, Products, AboutPage, ContactPage, Cart, PageNotFound } from "./pages";
 
-// Login
+// Pages
+import { Home, Product, Products, AboutPage, ContactPage, Cart, PageNotFound } from "./pages";
 import Login from "./pages/Login";
 
-// Buyer Nested Pages
+// Buyer
 import ProductList from "./pages/BUYER/ProductList";
 import OrderList from "./pages/BUYER/OrderList";
 import CartPage from "./pages/BUYER/CartPage";
@@ -30,87 +14,91 @@ import Checkout from "./pages/BUYER/Checkout";
 import BuyerProduct from "./pages/BUYER/Product";
 import BuyerNavbar from "./pages/BUYER/Buyernavber";
 
-// Seller Nested Pages
+// Seller
 import SellerNavbar from "./pages/Seller/selernavbar";
 import AddProduct from "./pages/Seller/AddProduct";
 import CheckStatus from "./pages/Seller/CheckStatus";
 import MyProducts from "./pages/Seller/MyProducts";
 
-// Admin Pages
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminNavbar from "./pages/Admin/AdminNavbar";
-import ProductListAdmin from "./pages/Admin/ProductList";
-import SellerRequests from "./pages/Admin/SellerRequests";
-import Analytics from "./pages/Admin/Analytics";
-import Inventory from "./pages/Admin/Inventory";
-import Orders from "./pages/Admin/Orders";
-
 // Utils
 import ScrollToTop from "./components/ScrollToTop";
 import { Toaster } from "react-hot-toast";
 
-// ✅ Wrapper to validate login role in URL
 function LoginWithRole() {
   const { role } = useParams();
-  const validRoles = ["buyer", "seller", "admin"];
-  if (!validRoles.includes(role)) {
-    // return <Navigate to="/login/buyer" replace />;
-  }
+  const validRoles = ["buyer", "seller"];
+  if (!validRoles.includes(role)) return <Navigate to="/login/buyer" replace />;
   return <Login />;
 }
 
-// ✅ Protected Route Wrapper
-function ProtectedRoute({ children, allowedRoles }) {
-  const token = localStorage.getItem("token"); // Get token from localStorage instead
-  const userRole = localStorage.getItem("role"); // Get role from localStorage
+// ✅ Authentication Hook
+function useAuth() {
+  const token = Cookies.get("token") || localStorage.getItem("token");
+  const userRole = Cookies.get("role") || localStorage.getItem("role");
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  const isAuthenticated = token && user && userRole && user.role === userRole;
-  console.log("Auth Status:", { isAuthenticated, token: !!token, user: !!user, userRole });
+  console.log("🔍 Auth Debug:", {
+    tokenSource: Cookies.get("token") ? "cookie" : (localStorage.getItem("token") ? "localStorage" : "missing"),
+    roleSource: Cookies.get("role") ? "cookie" : (localStorage.getItem("role") ? "localStorage" : "missing"),
+    user: user ? user.fullName : "missing",
+    tokenPreview: token ? token.substring(0, 15) + "..." : "missing",
+    allCookies: document.cookie,
+  });
+
+  const isAuthenticated = !!(token && user && userRole && user.role === userRole);
+
+  return { isAuthenticated, user, userRole, token };
+}
+
+// ✅ Protected Route
+function ProtectedRoute({ children, allowedRoles }) {
+  const { isAuthenticated, userRole } = useAuth();
 
   if (!isAuthenticated) {
-    // Clear all auth data if not authenticated
+    console.log("❌ Not authenticated, redirecting to login");
     localStorage.clear();
     Cookies.remove("token");
     Cookies.remove("role");
-    return <Navigate to={`/login/${userRole || 'buyer'}`} replace />;
+    return <Navigate to="/login/buyer" replace />;
   }
 
-  // Check if user has permission for this route
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    console.log("Role not allowed:", { userRole, allowedRoles });
-    // Redirect to appropriate dashboard
-    const dashPath = {
-      admin: "/admin-dashboard",
-      seller: "/seller/dashboard",
-      buyer: "/buyer-dashboard"
-    }[userRole];
+    console.log("⚠️ Role not allowed, redirecting...");
+    const dashPath = userRole === "seller" ? "/seller/dashboard" : "/buyer-dashboard";
     return <Navigate to={dashPath} replace />;
   }
 
   return children;
 }
 
+// ✅ Default redirect
+function AuthRedirect() {
+  const { isAuthenticated, userRole } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login/buyer" replace />;
+  return <Navigate to={userRole === "seller" ? "/seller/dashboard" : "/buyer-dashboard"} replace />;
+}
+
 function App() {
   return (
     <>
       <ScrollToTop />
-
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<AuthRedirect />} />
+
+        {/* Public */}
+        <Route path="/home" element={<Home />} />
         <Route path="/product" element={<Products />} />
         <Route path="/product/:id" element={<Product />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/cart" element={<Cart />} />
 
-        {/* Auth Routes */}
+        {/* Auth */}
         <Route path="/login" element={<Navigate to="/login/buyer" replace />} />
         <Route path="/login/:role" element={<LoginWithRole />} />
         <Route path="/register" element={<Navigate to="/login/buyer" replace />} />
 
-        {/* Buyer Dashboard */}
+        {/* Buyer */}
         <Route
           path="/buyer-dashboard/*"
           element={
@@ -128,7 +116,7 @@ function App() {
           <Route path="checkout" element={<Checkout />} />
         </Route>
 
-        {/* Seller Dashboard */}
+        {/* Seller */}
         <Route
           path="/seller/*"
           element={
@@ -144,32 +132,8 @@ function App() {
           <Route path="check-status" element={<CheckStatus />} />
         </Route>
 
-        {/* Admin Dashboard & Features */}
-        <Route
-          path="/admin-dashboard/*"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <div className="flex flex-col min-h-screen">
-                <AdminNavbar />
-                <div className="flex-grow">
-                  <Routes>
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="analytics" element={<Analytics />} />
-                    <Route path="products" element={<ProductListAdmin />} />
-                    <Route path="seller-requests" element={<SellerRequests />} />
-                    <Route path="inventory" element={<Inventory />} />
-                    <Route path="orders" element={<Orders />} />
-                  </Routes>
-                </div>
-              </div>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* 404 Page */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-
       <Toaster position="top-right" reverseOrder={false} />
     </>
   );

@@ -37,7 +37,7 @@ const Navbar = () => {
     { path: "/contact", name: "Contact" },
   ];
 
-  const roles = ["admin", "seller", "buyer"];
+  const roles = ["seller", "buyer"];
 
   return (
     <nav className="bg-green-500 shadow-2xl fixed top-0 left-0 w-full z-50">
