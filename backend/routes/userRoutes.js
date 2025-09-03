@@ -18,6 +18,7 @@ router.post("/register", registerUser);
 // ✅ Login user (sets cookie)
 router.post("/login", loginUser);
 
+
 // ✅ Logout user (clears cookie)
 router.post("/logout", logoutUser);
 

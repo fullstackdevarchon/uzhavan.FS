@@ -13,8 +13,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend URL
+    origin: ["http://localhost:5173", "http://localhost:5174"], // frontend and admin frontend URLs
     credentials: true, // allow cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // allowed methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // allowed headers
   })
 );
 
