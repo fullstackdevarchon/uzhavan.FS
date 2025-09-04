@@ -102,57 +102,59 @@ function CheckStatus() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto bg-gray-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Order Status</h2>
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
+        📊 Order Status
+      </h2>
 
-      {/* Orders Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {orders.map((order) => (
-          <div
-            key={order.id}
-            className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition"
-          >
-            {/* Product Image */}
-            <img
-              src={order.image}
-              alt={order.title}
-              className="w-full h-40 object-contain bg-gray-50"
-            />
+        {/* Orders Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {orders.map((order) => (
+            <div
+              key={order.id}
+              className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition"
+            >
+              {/* Product Image */}
+              <img
+                src={order.image}
+                alt={order.title}
+                className="w-full h-40 object-contain bg-gray-50"
+              />
 
-            {/* Product Info */}
-            <div className="p-4 flex flex-col justify-between">
-              <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
-                {order.title}
-              </h3>
-              <p className="text-sm text-gray-500 capitalize mb-2">
-                {order.category}
-              </p>
-              <p className="text-gray-900 font-bold mb-3">₹{order.price}</p>
+              {/* Product Info */}
+              <div className="p-4 flex flex-col justify-between">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">
+                  {order.title}
+                </h3>
+                <p className="text-sm text-gray-500 capitalize mb-2">
+                  {order.category}
+                </p>
+                <p className="text-gray-900 font-bold mb-3">₹{order.price}</p>
 
-              {/* Weight & Quantity */}
-              <div className="flex items-center justify-between mb-3 text-sm text-gray-700">
-                <span className="flex items-center gap-2">
-                  <FaBalanceScale className="text-gray-500" />{" "}
-                  <span className="font-medium">Weight:</span> {order.weight}
-                </span>
-                <span className="flex items-center gap-2">
-                  <FaBoxes className="text-gray-500" />{" "}
-                  <span className="font-medium">Qty:</span> {order.quantity}
-                </span>
+                {/* Weight & Quantity */}
+                <div className="flex items-center justify-between mb-3 text-sm text-gray-700">
+                  <span className="flex items-center gap-2">
+                    <FaBalanceScale className="text-gray-500" />{" "}
+                    <span className="font-medium">Weight:</span> {order.weight}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <FaBoxes className="text-gray-500" />{" "}
+                    <span className="font-medium">Qty:</span> {order.quantity}
+                  </span>
+                </div>
+
+                {/* Status */}
+                <div className="mb-3">{getStatusBadge(order.status)}</div>
+
+                {/* Admin Response */}
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium text-gray-700">Admin:</span>{" "}
+                  {order.adminResponse}
+                </p>
               </div>
-
-              {/* Status */}
-              <div className="mb-3">{getStatusBadge(order.status)}</div>
-
-              {/* Admin Response */}
-              <p className="text-sm text-gray-600">
-                <span className="font-medium text-gray-700">Admin:</span>{" "}
-                {order.adminResponse}
-              </p>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
     </div>
   );
 }

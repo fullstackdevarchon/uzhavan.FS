@@ -63,59 +63,60 @@ const MyProducts = () => {
   };
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">📦 My Products</h1>
-      </div>
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
+        📦 My Products
+      </h2>
 
-      {/* Products Grid */}
-      {products.length === 0 ? (
-        <p className="text-gray-500 text-center">No products found</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="border rounded-2xl shadow-lg flex flex-col bg-white hover:shadow-2xl transition overflow-hidden"
-            >
-              {/* Image Fit */}
-              <div className="w-full h-56 bg-gray-100">
-                <img
-                  src={product.image}
-                  alt={product.title}
-                  className="w-full h-full object-cover"
-                />
+        {/* Products Grid */}
+        {products.length === 0 ? (
+          <p className="text-gray-500 text-center">No products found</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <div
+                key={product.id}
+                className="border rounded-2xl shadow-lg flex flex-col bg-white hover:shadow-2xl transition overflow-hidden"
+              >
+                {/* Image */}
+                <div className="w-full h-56 bg-gray-100">
+                  <img
+                    src={product.image}
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Product Info */}
+                <div className="p-4 flex flex-col flex-1">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    {product.title}
+                  </h3>
+                  <p className="text-lg font-bold text-green-600 mb-2">
+                    ₹{product.price}
+                  </p>
+                  <p className="text-gray-700 text-sm">
+                    <strong>Weight:</strong> {product.weight}
+                  </p>
+                  <p className="text-gray-700 text-sm">
+                    <strong>Stock:</strong> {product.stock}
+                  </p>
+                  <p className="text-gray-700 text-sm mb-3">
+                    <strong>Sold:</strong> {product.sold}
+                  </p>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={() => handleDelete(product.id)}
+                    className="mt-auto flex items-center justify-center gap-2 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                </div>
               </div>
-
-              {/* Content */}
-              <div className="p-4 flex flex-col flex-grow">
-                <h2 className="text-lg font-semibold text-gray-800 mb-1">
-                  {product.title}
-                </h2>
-                <p className="text-gray-600 font-medium">₹{product.price}</p>
-                <p className="text-gray-700 text-sm">
-                  <strong>Weight:</strong> {product.weight}
-                </p>
-                <p className="text-gray-700 text-sm">
-                  <strong>Stock:</strong> {product.stock}
-                </p>
-                <p className="text-gray-700 text-sm mb-3">
-                  <strong>Sold:</strong> {product.sold}
-                </p>
-
-                {/* Delete Button */}
-                <button
-                  onClick={() => handleDelete(product.id)}
-                  className="mt-auto flex items-center justify-center gap-2 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
-                >
-                  <FaTrash /> Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
     </div>
   );
 };

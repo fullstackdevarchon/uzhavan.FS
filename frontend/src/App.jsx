@@ -1,9 +1,17 @@
 import React from "react";
-import { Routes, Route, Navigate, useParams, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, useParams, Outlet, Link } from "react-router-dom";
 import Cookies from "js-cookie";
 
 // Pages
-import { Home, Product, Products, AboutPage, ContactPage, Cart, PageNotFound } from "./pages";
+import {
+  Home,
+  Product,
+  Products,
+  AboutPage,
+  ContactPage,
+  Cart,
+  PageNotFound,
+} from "./pages";
 import Login from "./pages/Login";
 
 // Buyer
@@ -12,13 +20,15 @@ import OrderList from "./pages/BUYER/OrderList";
 import CartPage from "./pages/BUYER/CartPage";
 import Checkout from "./pages/BUYER/Checkout";
 import BuyerProduct from "./pages/BUYER/Product";
-import BuyerNavbar from "./pages/BUYER/Buyernavber";
+import BuyerDashboard from "./pages/BuyerDashboard";
+import BuyerDashboardOverview from "./pages/BUYER/DashboardOverview";
 
 // Seller
-import SellerNavbar from "./pages/Seller/selernavbar";
+import SellerDashboard from "./pages/SellerDashboard";
 import AddProduct from "./pages/Seller/AddProduct";
 import CheckStatus from "./pages/Seller/CheckStatus";
 import MyProducts from "./pages/Seller/MyProducts";
+import SellerDashboardOverview from "./pages/Seller/DashboardOverview";
 
 // Utils
 import ScrollToTop from "./components/ScrollToTop";
@@ -37,15 +47,12 @@ function useAuth() {
   const userRole = Cookies.get("role") || localStorage.getItem("role");
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  console.log("🔍 Auth Debug:", {
-    tokenSource: Cookies.get("token") ? "cookie" : (localStorage.getItem("token") ? "localStorage" : "missing"),
-    roleSource: Cookies.get("role") ? "cookie" : (localStorage.getItem("role") ? "localStorage" : "missing"),
-    user: user ? user.fullName : "missing",
-    tokenPreview: token ? token.substring(0, 15) + "..." : "missing",
-    allCookies: document.cookie,
-  });
-
-  const isAuthenticated = !!(token && user && userRole && user.role === userRole);
+  const isAuthenticated = !!(
+    token &&
+    user &&
+    userRole &&
+    user.role === userRole
+  );
 
   return { isAuthenticated, user, userRole, token };
 }
@@ -55,7 +62,6 @@ function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, userRole } = useAuth();
 
   if (!isAuthenticated) {
-    console.log("❌ Not authenticated, redirecting to login");
     localStorage.clear();
     Cookies.remove("token");
     Cookies.remove("role");
@@ -63,19 +69,30 @@ function ProtectedRoute({ children, allowedRoles }) {
   }
 
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    console.log("⚠️ Role not allowed, redirecting...");
-    const dashPath = userRole === "seller" ? "/seller/dashboard" : "/buyer-dashboard";
+    const dashPath =
+      userRole === "seller" ? "/seller/dashboard" : "/buyer-dashboard";
     return <Navigate to={dashPath} replace />;
   }
 
   return children;
 }
 
-// ✅ Default redirect
+// ✅ Default redirect → Now `/` = Home page
 function AuthRedirect() {
   const { isAuthenticated, userRole } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login/buyer" replace />;
-  return <Navigate to={userRole === "seller" ? "/seller/dashboard" : "/buyer-dashboard"} replace />;
+
+  // 👉 If you want logged-in users to auto-redirect to dashboard, uncomment below:
+  // if (isAuthenticated) {
+  //   return (
+  //     <Navigate
+  //       to={userRole === "seller" ? "/seller/dashboard" : "/buyer-dashboard"}
+  //       replace
+  //     />
+  //   );
+  // }
+
+  // Default: show public home
+  return <Home />;
 }
 
 function App() {
@@ -83,6 +100,7 @@ function App() {
     <>
       <ScrollToTop />
       <Routes>
+        {/* Default page */}
         <Route path="/" element={<AuthRedirect />} />
 
         {/* Public */}
@@ -98,17 +116,16 @@ function App() {
         <Route path="/login/:role" element={<LoginWithRole />} />
         <Route path="/register" element={<Navigate to="/login/buyer" replace />} />
 
-        {/* Buyer */}
+        {/* Buyer Routes - Using nested routing with BuyerNavbar layout */}
         <Route
-          path="/buyer-dashboard/*"
+          path="/buyer-dashboard"
           element={
             <ProtectedRoute allowedRoles={["buyer"]}>
-              <BuyerNavbar />
-              <Outlet />
+              <BuyerDashboard />
             </ProtectedRoute>
           }
         >
-          <Route index element={<ProductList />} />
+          <Route index element={<BuyerDashboardOverview />} />
           <Route path="products" element={<ProductList />} />
           <Route path="product/:id" element={<BuyerProduct />} />
           <Route path="orders" element={<OrderList />} />
@@ -116,22 +133,26 @@ function App() {
           <Route path="checkout" element={<Checkout />} />
         </Route>
 
-        {/* Seller */}
+        {/* Seller Routes - Using nested routing with SellerNavbar layout */}
         <Route
-          path="/seller/*"
+          path="/seller"
           element={
             <ProtectedRoute allowedRoles={["seller"]}>
-              <SellerNavbar />
-              <Outlet />
+              <SellerDashboard />
             </ProtectedRoute>
           }
         >
-          <Route path="dashboard" element={<AddProduct />} />
+          <Route index element={<SellerDashboardOverview />} />
+          <Route path="dashboard" element={<SellerDashboardOverview />} />
           <Route path="add-product" element={<AddProduct />} />
           <Route path="my-products" element={<MyProducts />} />
           <Route path="check-status" element={<CheckStatus />} />
         </Route>
+        
+        {/* Redirect old seller dashboard route */}
+        <Route path="/seller/dashboard" element={<Navigate to="/seller" replace />} />
 
+        {/* Fallback */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
       <Toaster position="top-right" reverseOrder={false} />

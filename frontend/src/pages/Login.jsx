@@ -14,8 +14,9 @@ const Login = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // ✅ Allowed roles
   const allowedRoles = ["buyer", "seller"];
-  const currentRole = allowedRoles.includes(role) ? role : null;
+  const currentRole = allowedRoles.includes(role) ? role : "buyer"; // fallback: buyer
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +24,10 @@ const Login = () => {
     setSuccess("");
 
     try {
-      const url = `http://localhost:5000/api/users${isRegister ? "/register" : "/login"}`;
+      const url = `http://localhost:5000/api/users${
+        isRegister ? "/register" : "/login"
+      }`;
+
       const payload = isRegister
         ? { fullName, email, pass: password, role: currentRole }
         : { email, pass: password };
@@ -39,11 +43,21 @@ const Login = () => {
       const data = await res.json();
       console.log("📨 Backend response:", data);
 
-      if (!res.ok) return setError(data.message || "Something went wrong");
+      if (!res.ok) {
+        return setError(data.message || "Something went wrong");
+      }
 
+      // ✅ Login flow
       if (!isRegister && data.user) {
         const { user, token } = data;
-        if (!token) throw new Error("No token received");
+
+        if (!token) return setError("Authentication failed: No token received");
+
+        // ✅ Check if backend role matches login URL role
+        if (user.role !== currentRole) {
+          alert(`You are not a ${currentRole}! Your account is ${user.role}.`);
+          return;
+        }
 
         const authData = {
           id: user.id,
@@ -57,14 +71,27 @@ const Login = () => {
         localStorage.setItem("token", token);
         localStorage.setItem("role", user.role);
 
-        // Try cookies (not mandatory for localhost)
-        Cookies.set("token", token, { path: "/", expires: 1, sameSite: "lax" });
-        Cookies.set("role", user.role, { path: "/", expires: 1, sameSite: "lax" });
+        // Save in cookies (backup, expires in 1 day)
+        Cookies.set("token", token, { path: "/", expires: 1, sameSite: "Strict" });
+        Cookies.set("role", user.role, { path: "/", expires: 1, sameSite: "Strict" });
 
-        console.log("🔐 Auth saved:", { authData, tokenPreview: token.substring(0, 15) + "..." });
+        console.log("🔐 Auth saved:", {
+          authData,
+          tokenPreview: token.substring(0, 15) + "...",
+        });
 
-        navigate(user.role === "seller" ? "/seller/dashboard" : "/buyer-dashboard", { replace: true });
-      } else if (isRegister) {
+        // ✅ Success alert
+        alert("Login successful!");
+
+        // ✅ Redirect to correct dashboard
+        navigate(
+          user.role === "seller" ? "/seller/dashboard" : "/buyer-dashboard",
+          { replace: true }
+        );
+      }
+
+      // ✅ Registration flow
+      else if (isRegister) {
         setSuccess("Registration successful! Please login.");
         setTimeout(() => setIsRegister(false), 1500);
       }
@@ -83,32 +110,60 @@ const Login = () => {
             {isRegister ? "Create Account" : "Welcome Back"}
           </h1>
           <p className="text-center text-gray-600 mb-8">
-            {isRegister ? `Register as ${currentRole}` : `Login as ${currentRole}`}
+            {isRegister
+              ? `Register as ${currentRole}`
+              : `Login as ${currentRole}`}
           </p>
 
-          {error && <div className="mb-4 bg-red-100 text-red-700 px-4 py-3 rounded">{error}</div>}
-          {success && <div className="mb-4 bg-green-100 text-green-700 px-4 py-3 rounded">{success}</div>}
+          {error && (
+            <div className="mb-4 bg-red-100 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 bg-green-100 text-green-700 px-4 py-3 rounded">
+              {success}
+            </div>
+          )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             {isRegister && (
               <div>
                 <label className="block mb-2 font-semibold">Full Name</label>
-                <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required
-                  className="border rounded-lg p-3 w-full" />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="border rounded-lg p-3 w-full"
+                />
               </div>
             )}
             <div>
               <label className="block mb-2 font-semibold">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                className="border rounded-lg p-3 w-full" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="border rounded-lg p-3 w-full"
+              />
             </div>
             <div>
               <label className="block mb-2 font-semibold">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-                className="border rounded-lg p-3 w-full" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="border rounded-lg p-3 w-full"
+              />
             </div>
             <div className="flex justify-center">
-              <button type="submit" className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-md">
+              <button
+                type="submit"
+                className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition"
+              >
                 {isRegister ? "Register" : "Login"}
               </button>
             </div>
@@ -116,9 +171,25 @@ const Login = () => {
 
           <p className="text-center mt-4">
             {isRegister ? (
-              <>Already have an account? <button onClick={() => setIsRegister(false)} className="text-green-600">Login</button></>
+              <>
+                Already have an account?{" "}
+                <button
+                  onClick={() => setIsRegister(false)}
+                  className="text-green-600 hover:underline"
+                >
+                  Login
+                </button>
+              </>
             ) : (
-              <>New here? <button onClick={() => setIsRegister(true)} className="text-green-600">Register</button></>
+              <>
+                New here?{" "}
+                <button
+                  onClick={() => setIsRegister(true)}
+                  className="text-green-600 hover:underline"
+                >
+                  Register
+                </button>
+              </>
             )}
           </p>
         </div>
