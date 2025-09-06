@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { FaUpload, FaBalanceScale, FaBoxes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 function AddProduct() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -11,15 +14,40 @@ function AddProduct() {
     quantity: "",
     description: "",
     image: null,
+    category: "", // Add this line
   });
 
   const [preview, setPreview] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/v1/categories/enabled", {
+          credentials: "include"
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          setCategories(data.categories);
+        }
+      } catch (error) {
+        toast.error("Failed to fetch categories");
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image" && files.length > 0) {
       const file = files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
       setForm({ ...form, image: file });
       setPreview(URL.createObjectURL(file));
     } else {
@@ -27,31 +55,67 @@ function AddProduct() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    // Use customWeight if weight is "custom"
-    const finalWeight =
-      form.weight === "custom" ? form.customWeight : form.weight;
+    try {
+      const finalWeight =
+        form.weight === "custom" ? form.customWeight : form.weight;
 
-    const productData = {
-      ...form,
-      weight: finalWeight,
-    };
+      // Create FormData
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("price", form.price);
+      formData.append("weight", finalWeight);
+      formData.append("quantity", form.quantity);
+      formData.append("description", form.description);
+      formData.append("category", form.category); // Add this line
+      if (form.image) {
+        formData.append("image", form.image);
+      }
 
-    console.log("New Product:", productData);
-    toast.success("✅ Product added successfully!");
+      // Updated API endpoint
+      const response = await fetch("http://localhost:5000/api/v1/products/create", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+        headers: {
+          // Don't set Content-Type with FormData
+          // Browser will set it automatically with boundary
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
 
-    setForm({
-      name: "",
-      price: "",
-      weight: "",
-      customWeight: "",
-      quantity: "",
-      description: "",
-      image: null,
-    });
-    setPreview(null);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Error adding product");
+      }
+
+      toast.success("✅ Product submitted for approval!");
+
+      // Reset form
+      setForm({
+        name: "",
+        price: "",
+        weight: "",
+        customWeight: "",
+        quantity: "",
+        description: "",
+        image: null,
+        category: "", // Reset category
+      });
+      setPreview(null);
+
+      // Redirect to products list
+      navigate("/seller/my-products");
+    } catch (error) {
+      toast.error(error.message || "Failed to add product");
+      console.error("Add product error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const displayWeight =
@@ -166,6 +230,27 @@ function AddProduct() {
               />
             </div>
 
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Category
+              </label>
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                required
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
+              >
+                <option value="">Select Category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* File Upload */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -186,9 +271,14 @@ function AddProduct() {
 
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-semibold text-sm sm:text-base transition-all"
+              disabled={loading}
+              className={`w-full ${
+                loading
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700"
+              } text-white px-4 py-3 rounded-lg font-semibold text-sm sm:text-base transition-all`}
             >
-              ➕ Add Product
+              {loading ? "Adding Product..." : "➕ Add Product"}
             </button>
           </form>
         </div>
@@ -218,6 +308,9 @@ function AddProduct() {
               ⚖️ {displayWeight || "Weight"}
             </p>
             <p className="text-gray-600 text-sm">📦 {form.quantity || "Qty"}</p>
+            <p className="text-gray-600 text-sm">
+              📑 {categories.find(c => c.id === form.category)?.name || "Category"}
+            </p>
             <p className="text-gray-500 text-sm italic mt-2">
               {form.description || "Product description will appear here."}
             </p>

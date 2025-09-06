@@ -1,151 +1,111 @@
-// src/pages/Login.jsx
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
+  const { setAuth } = useAuth(); // ✅ from context
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-  // Check authentication status on mount
-  useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
-        const user = JSON.parse(localStorage.getItem("user") || "null");
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
-        if (token && role === "admin" && user?.role === "admin") {
-          navigate("/admin-dashboard", { replace: true });
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-        localStorage.clear();
-      } finally {
-        setAuthChecked(true);
-      }
-    };
-
-    checkAuth();
-  }, [navigate]);
-
-  // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    setLoading(true);
 
     try {
-      const url = "http://localhost:5000/api/users/login";
-      const payload = { email, pass: password };
-
-      const res = await fetch(url, {
+      const response = await fetch("http://localhost:5000/api/users/admin/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          email: formData.email,
+          pass: formData.password, // 🔑 backend expects `pass`
+        }),
       });
 
-      const data = await res.json();
+      const data = await response.json();
 
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
-      }
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.user.role);
 
-      // Verify admin role
-      if (data.user?.role !== "admin") {
-        throw new Error("Access denied. Admin privileges required.");
-      }
+        setAuth({
+          isAuthenticated: true,
+          user: data.user,
+          token: data.token,
+        });
 
-      // Store authentication data
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("role", "admin");
-      localStorage.setItem("token", data.token);
-
-      // Set cookies
-      document.cookie = `token=${data.token}; path=/; max-age=86400`;
-      document.cookie = `role=admin; path=/; max-age=86400`;
-
-      toast.success("Login successful!");
-
-      // Add a small delay to ensure storage is updated
-      setTimeout(() => {
+        toast.success("Login successful!");
         navigate("/admin-dashboard");
-      }, 100);
-    } catch (err) {
-      setError(err.message || "An error occurred. Please try again.");
-      toast.error(err.message || "Login failed");
+      } else {
+        toast.error(data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Failed to connect to server");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-10 h-10 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-white px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Login</h1>
-          <p className="text-gray-600">Enter your credentials to continue</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Admin Login
+          </h2>
         </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
-            {error}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <input
+                name="email"
+                type="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder="Email address"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <input
+                name="password"
+                type="password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+              />
+            </div>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="admin@example.com"
-              required
-            />
+            <button
+              type="submit"
+              disabled={loading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+            >
+              {loading ? "Signing in..." : "Sign in"}
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`w-full py-3 px-4 rounded-lg text-white font-medium ${
-              isLoading
-                ? 'bg-blue-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            } transition-colors`}
-          >
-            {isLoading ? 'Signing in...' : 'Sign in'}
-          </button>
         </form>
       </div>
     </div>

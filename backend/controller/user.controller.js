@@ -97,3 +97,98 @@ export const logoutUser = (req, res) => {
   res.clearCookie("token", { ...cookieOptions, maxAge: 0 });
   res.json({ message: "Logged out successfully" });
 };
+
+export const adminLogin = async (req, res) => {
+  try {
+    const { email, pass } = req.body;
+
+    if (!email || !pass) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide email and password"
+      });
+    }
+
+    const user = await User.findByEmail(email);
+
+    if (!user || user.role !== "admin") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials or not authorized"
+      });
+    }
+
+    const isPasswordCorrect = await user.comparePassword(pass);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials"
+      });
+    }
+
+    const token = user.getJWTToken();
+    user.lastLogin = new Date();
+    await user.save();
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
+  }
+};
+
+export const verifyToken = async (req, res) => {
+  try {
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided",
+      });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
+  }
+};

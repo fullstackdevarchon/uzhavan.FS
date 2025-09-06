@@ -1,6 +1,7 @@
 // models/User.js
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 // User Schema
 const userSchema = new mongoose.Schema(
@@ -27,6 +28,14 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "buyer", "seller"], // ✅ allowed roles
       default: "buyer", // ✅ default role
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -45,6 +54,26 @@ userSchema.pre("save", async function (next) {
 // 🔑 Method to compare passwords during login
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.pass);
+};
+
+// 🎟️ Generate JWT Token
+userSchema.methods.getJWTToken = function () {
+  return jwt.sign(
+    { id: this._id, role: this.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "24h" }
+  );
+};
+
+// 📝 Update last login
+userSchema.methods.updateLastLogin = async function () {
+  this.lastLogin = new Date();
+  await this.save();
+};
+
+// 🔍 Find by email (static method)
+userSchema.statics.findByEmail = async function (email) {
+  return this.findOne({ email }).select("+pass");
 };
 
 export default mongoose.model("User", userSchema);

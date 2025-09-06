@@ -1,106 +1,112 @@
-// src/App.jsx
-import React from "react";
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
-import Cookies from "js-cookie";
-
-// Admin Pages
-import AdminDashboard from "./pages/Admin/AdminDashboard";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useState, useEffect, createContext } from "react";
 import AdminNavbar from "./pages/Admin/AdminNavbar";
-import ProductListAdmin from "./pages/Admin/ProductList";
-import SellerRequests from "./pages/Admin/SellerRequests";
+import Login from "./pages/Auth/Login";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import SelectedProducts from "./pages/Admin/SelectedProducts";
+import ProductList from "./pages/Admin/ProductList";
+import Orders from "./pages/Admin/Orders";
 import Analytics from "./pages/Admin/Analytics";
 import Inventory from "./pages/Admin/Inventory";
-import Orders from "./pages/Admin/Orders";
-
-// Common Components
-import Login from "./pages/Login";
-import PageNotFound from "./pages/PageNotFound";
-import ScrollToTop from "./components/ScrollToTop";
+import SellerRequests from "./pages/Admin/SellerRequests";
 import { Toaster } from "react-hot-toast";
 
-// Admin Role Validator for Login
-function AdminLoginCheck() {
-  const { role } = useParams();
-  
-  // Ensure only admin role is allowed
-  if (role !== "admin") {
-    return <Navigate to="/login/admin" replace />;
-  }
-  return <Login />;
-}
+export const AuthContext = createContext(null);
 
-// Protected Route for Admin Only
-function AdminProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
-  const userRole = localStorage.getItem("role");
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-
-  // Strict validation for admin role
-  const isAdminAuthenticated = 
-    token && 
-    user && 
-    userRole === "admin" && 
-    user.role === "admin";
-
-  console.log("Admin Auth Status:", { 
-    isAuthenticated: isAdminAuthenticated, 
-    role: userRole,
-    hasToken: !!token 
+const App = () => {
+  const [authState, setAuthState] = useState({
+    isAuthenticated: false,
+    user: null,
+    loading: true,
   });
 
-  if (!isAdminAuthenticated) {
-    // Clear auth data if not admin or not authenticated
-    localStorage.clear();
-    Cookies.remove("token");
-    Cookies.remove("role");
-    return <Navigate to="/login/admin" replace />;
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setAuthState({ isAuthenticated: true, user: {}, loading: false });
+    } else {
+      setAuthState({ isAuthenticated: false, user: null, loading: false });
+    }
+  }, []);
+
+  const login = (userData) => {
+    localStorage.setItem("token", userData.token);
+    setAuthState({
+      isAuthenticated: true,
+      user: userData.user,
+      loading: false,
+    });
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setAuthState({
+      isAuthenticated: false,
+      user: null,
+      loading: false,
+    });
+  };
+
+  if (authState.loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+      </div>
+    );
   }
 
-  return children;
-}
-
-function App() {
   return (
-    <>
-      <ScrollToTop />
+    <AuthContext.Provider value={{ authState, login, logout }}>
+      <Toaster position="top-right" />
       <Routes>
-        {/* Redirect root to admin login */}
-        <Route path="/" element={<Navigate to="/login/admin" replace />} />
-
-        {/* Admin Login */}
-        <Route path="/login" element={<Navigate to="/login/admin" replace />} />
-        <Route path="/login/:role" element={<AdminLoginCheck />} />
-
-        {/* Admin Dashboard & Features */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/login"
+          element={
+            authState.isAuthenticated ? (
+              <Navigate to="/admin-dashboard" />
+            ) : (
+              <Login />
+            )
+          }
+        />
         <Route
           path="/admin-dashboard/*"
           element={
-            <AdminProtectedRoute>
-              <div className="flex flex-col min-h-screen bg-gray-50">
-                <AdminNavbar />
-                <div className="flex-grow p-6">
-                  <Routes>
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="analytics" element={<Analytics />} />
-                    <Route path="products" element={<ProductListAdmin />} />
-                    <Route path="seller-requests" element={<SellerRequests />} />
-                    <Route path="inventory" element={<Inventory />} />
-                    <Route path="orders" element={<Orders />} />
-                    <Route path="*" element={<PageNotFound />} />
-                  </Routes>
-                </div>
-              </div>
-            </AdminProtectedRoute>
+            authState.isAuthenticated ? (
+              <AdminNavbar />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="categories" element={<SelectedProducts />} />
+          <Route path="products" element={<ProductList />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="inventory" element={<Inventory />} />
+          <Route path="seller-requests" element={<SellerRequests />} />
+        </Route>
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen flex flex-col items-center justify-center">
+              <h1 className="text-6xl font-bold text-gray-900">404</h1>
+              <p className="mt-4 text-xl text-gray-600">Page Not Found</p>
+              <button
+                onClick={() => (window.location.href = "/login")}
+                className="mt-8 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Back to Login
+              </button>
+            </div>
           }
         />
-
-        {/* Catch all other routes and redirect to admin login */}
-        <Route path="*" element={<Navigate to="/login/admin" replace />} />
       </Routes>
-
-      <Toaster position="top-right" reverseOrder={false} />
-    </>
+    </AuthContext.Provider>
   );
-}
+};
 
 export default App;
+ 

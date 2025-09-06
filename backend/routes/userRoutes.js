@@ -5,21 +5,23 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  adminLogin,
+  verifyToken,
 } from "../controller/user.controller.js";
+import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// ✅ GET all users (without passwords)
-router.get("/", getUsers);
-
-// ✅ Register new user
+// Public routes
 router.post("/register", registerUser);
-
-// ✅ Login user (sets cookie)
 router.post("/login", loginUser);
-
-
-// ✅ Logout user (clears cookie)
 router.post("/logout", logoutUser);
+
+// Admin specific routes
+router.post("/admin/login", adminLogin);
+router.get("/admin/verify", verifyToken);
+
+// Protected routes
+router.get("/", isAuthenticated, authorizeRoles(["admin"]), getUsers);
 
 export default router;
