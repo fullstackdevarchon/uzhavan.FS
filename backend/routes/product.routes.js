@@ -5,7 +5,7 @@ import {
   getProductsByCategory,
   getSellerProducts,
   updateProductStatus,
-  deleteProduct,   // ✅ import new controller
+  deleteProduct, // ✅ shared controller
 } from "../controllers/product.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
 import { singleUpload } from "../middleware/multer.js";
@@ -48,12 +48,7 @@ router.patch(
   updateProductStatus
 );
 
-// ✅ Admin: delete product
-router.delete(
-  "/:id",
-  isAuthenticated,
-  authorizeRoles(["admin"]),
-  deleteProduct
-);
+// ✅ Delete product (Admin → any product, Seller → only their own)
+router.delete("/:id", isAuthenticated, deleteProduct);
 
 export default router;

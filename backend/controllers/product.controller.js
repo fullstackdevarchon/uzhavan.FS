@@ -1,8 +1,11 @@
+// controllers/productController.js
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import cloudinary from "../config/cloudinary.js";
 
-// Helper: upload buffer to Cloudinary
+/**
+ * Helper: Upload buffer to Cloudinary
+ */
 const uploadToCloudinary = (fileBuffer, folder) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -19,37 +22,25 @@ const uploadToCloudinary = (fileBuffer, folder) => {
   });
 };
 
-// ✅ CREATE PRODUCT (Seller)
+/**
+ * ✅ CREATE PRODUCT (Seller)
+ */
 export const createProduct = async (req, res) => {
   try {
-    console.log("👤 Authenticated user in createProduct:", req.user);
-
     if (!req.user || req.user.role !== "seller") {
-      console.warn("⚠️ Forbidden attempt by non-seller:", req.user?.role);
       return res.status(403).json({
         success: false,
-        message: "Forbidden. Only seller can perform this action",
+        message: "Forbidden. Only sellers can perform this action",
       });
     }
 
     const { name, price, weight, quantity, description, category } = req.body;
-    console.log("📝 Product input data:", {
-      name,
-      price,
-      weight,
-      quantity,
-      description,
-      category,
-    });
 
     if (!req.file) {
-      console.warn("⚠️ No image file provided in request");
       return res.status(400).json({ success: false, message: "Image required" });
     }
 
-    console.log("📤 Uploading image to Cloudinary...");
     const cloudinaryResponse = await uploadToCloudinary(req.file.buffer, "products");
-    console.log("✅ Cloudinary upload success:", cloudinaryResponse);
 
     const product = await Product.create({
       name,
@@ -66,8 +57,6 @@ export const createProduct = async (req, res) => {
       status: "pending",
     });
 
-    console.log("✅ Product created successfully:", product);
-
     res.status(201).json({
       success: true,
       message: "Product created and pending approval",
@@ -83,15 +72,15 @@ export const createProduct = async (req, res) => {
   }
 };
 
-// ✅ GET ALL PRODUCTS (Admin)
+/**
+ * ✅ GET ALL PRODUCTS (Admin)
+ */
 export const getAllProducts = async (req, res) => {
   try {
-    console.log("🔎 Fetching all products...");
     const products = await Product.find()
       .populate("category", "name")
       .populate("seller", "fullName email");
 
-    console.log(`✅ Found ${products.length} products`);
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error("❌ Error fetching products:", error);
@@ -99,59 +88,60 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
-// ✅ GET SELLER'S PRODUCTS
+/**
+ * ✅ GET SELLER'S PRODUCTS
+ */
 export const getSellerProducts = async (req, res) => {
   try {
-    console.log("👤 Seller requesting products:", req.user);
-
     if (!req.user || req.user.role !== "seller") {
-      console.warn("⚠️ Forbidden attempt by non-seller:", req.user?.role);
       return res.status(403).json({
         success: false,
-        message: "Forbidden. Only seller can view their products",
+        message: "Forbidden. Only sellers can view their products",
       });
     }
 
-    const products = await Product.find({ seller: req.user._id }).populate(
-      "category",
-      "name"
-    );
+    const products = await Product.find({ seller: req.user._id }).populate("category", "name");
 
-    console.log(`✅ Found ${products.length} products for seller ${req.user._id}`);
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error("❌ Error fetching seller products:", error);
-    res.status(500).json({ success: false, message: "Error fetching seller products" });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching seller products",
+    });
   }
 };
 
-// ✅ GET PRODUCTS BY CATEGORY (approved only)
+/**
+ * ✅ GET PRODUCTS BY CATEGORY (approved only)
+ */
 export const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
-    console.log("🔎 Fetching products by category:", category);
 
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
-      console.warn("⚠️ Invalid category ID:", category);
       return res.status(400).json({ success: false, message: "Invalid category" });
     }
 
-    const products = await Product.find({ category, status: "approved" }).populate(
-      "seller",
-      "fullName"
-    );
+    const products = await Product.find({
+      category,
+      status: "approved",
+    }).populate("seller", "fullName");
 
-    console.log(`✅ Found ${products.length} approved products in category ${category}`);
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error("❌ Error fetching products by category:", error);
-    res.status(500).json({ success: false, message: "Error fetching products by category" });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching products by category",
+    });
   }
 };
 
-// ✅ UPDATE PRODUCT STATUS (Admin)
-// ✅ UPDATE PRODUCT STATUS (Admin)
+/**
+ * ✅ UPDATE PRODUCT STATUS (Admin)
+ */
 export const updateProductStatus = async (req, res) => {
   try {
     if (!req.user || req.user.role !== "admin") {
@@ -184,20 +174,16 @@ export const updateProductStatus = async (req, res) => {
       product,
     });
   } catch (error) {
+    console.error("❌ Error updating product status:", error);
     res.status(500).json({ success: false, message: "Error updating product status" });
   }
 };
 
-// ✅ DELETE PRODUCT (Admin only)
+/**
+ * ✅ DELETE PRODUCT (Admin → any, Seller → only own)
+ */
 export const deleteProduct = async (req, res) => {
   try {
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden. Only admin can delete products",
-      });
-    }
-
     const { id } = req.params;
 
     const product = await Product.findById(id);
@@ -205,7 +191,15 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    // If image exists in Cloudinary → delete it
+    // If seller → ensure they own the product
+    if (req.user.role === "seller" && product.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden. You can only delete your own products",
+      });
+    }
+
+    // Delete product image from Cloudinary if exists
     if (product.image?.public_id) {
       try {
         await cloudinary.uploader.destroy(product.image.public_id);
