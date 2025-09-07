@@ -8,7 +8,7 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/product.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
-import adminRoutes from "./routes/admin.routes.js"; // ✅ FIX: Import admin routes
+import adminRoutes from "./routes/admin.routes.js";
 
 dotenv.config();
 const app = express();
@@ -17,12 +17,11 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// CORS
-// CORS
+// ✅ CORS setup
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // ✅ Vite default
+      "http://localhost:5173", // Vite frontend
       "http://localhost:5175",
       "http://localhost:5176",
     ],
@@ -48,18 +47,6 @@ mongoose
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-});
-
-// Handle server errors
-server.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(
-      `❌ Port ${PORT} is already in use. Please kill existing processes or use a different port.`
-    );
-    process.exit(1);
-  } else {
-    console.error("❌ Server error:", err);
-  }
 });
 
 // Graceful shutdown

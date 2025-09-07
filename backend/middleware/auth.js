@@ -1,13 +1,12 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-// Middleware: check if user is logged in
+// ✅ Authentication
 export const isAuthenticated = async (req, res, next) => {
   try {
     const token =
       req.cookies.token ||
-      (req.headers.authorization &&
-        req.headers.authorization.split(" ")[1]);
+      (req.headers.authorization && req.headers.authorization.split(" ")[1]);
 
     if (!token) {
       return res.status(401).json({
@@ -17,13 +16,10 @@ export const isAuthenticated = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     req.user = await User.findById(decoded.id);
 
     if (!req.user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "User not found" });
+      return res.status(401).json({ success: false, message: "User not found" });
     }
 
     console.log("✅ Authenticated user:", {
@@ -39,15 +35,10 @@ export const isAuthenticated = async (req, res, next) => {
   }
 };
 
-// Middleware: check if user has specific role(s)
+// ✅ Authorization
 export const authorizeRoles = (roles) => {
   return (req, res, next) => {
-    console.log(
-      "🔎 Checking role:",
-      req.user.role,
-      "Allowed roles:",
-      roles
-    );
+    console.log("🔎 Checking role:", req.user.role, "Allowed roles:", roles);
 
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
@@ -59,3 +50,4 @@ export const authorizeRoles = (roles) => {
     next();
   };
 };
+  

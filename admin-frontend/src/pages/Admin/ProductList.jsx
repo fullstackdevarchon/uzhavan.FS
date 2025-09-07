@@ -1,32 +1,63 @@
+// src/pages/Admin/ProductListAdmin.jsx
 import React, { useState, useEffect, useRef } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-
 import { FaTrash, FaChevronDown } from "react-icons/fa";
-
-// ✅ Import local JSON file directly
-import productsData from "../../data/products.json";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const ProductListAdmin = () => {
   const [data, setData] = useState([]);
   const [filter, setFilter] = useState([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("All");
+  const [categories, setCategories] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const dropdownRef = useRef(null);
 
-  // Load products from local JSON
-  useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setData(productsData);
-      setFilter(productsData);
+  // ✅ Fetch products from backend (only approved)
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get("http://localhost:5000/api/v1/products/all", {
+        withCredentials: true,
+      });
+
+      if (data.success) {
+        const approved = data.products.filter((p) => p.status === "approved");
+        setData(approved);
+        setFilter(approved);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error fetching products");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  // ✅ Fetch categories (enabled only)
+  const fetchCategories = async () => {
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/v1/categories/all", {
+        withCredentials: true,
+      });
+
+      if (data.success) {
+        const enabled = data.categories.filter((c) => c.enabled);
+        setCategories(enabled);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error fetching categories");
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
   }, []);
 
-  // Close dropdown on outside click
+  // ✅ Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -37,46 +68,51 @@ const ProductListAdmin = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const filterProduct = (cat) => {
-    setCategory(cat);
+  // ✅ Filter products by category
+  const filterProduct = (catId, catName) => {
+    setCategory(catName);
     setDropdownOpen(false);
-    if (cat === "All") {
+
+    if (catName === "All") {
       setFilter(data);
     } else {
-      setFilter(
-        data.filter(
-          (item) => item.category.toLowerCase() === cat.toLowerCase()
-        )
-      );
+      setFilter(data.filter((item) => item.category?._id === catId));
     }
   };
 
-  // ✅ Delete product with confirmation
-  const deleteProduct = (id) => {
+  // ✅ Delete product (backend + state update)
+  const deleteProduct = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
-      const updatedData = data.filter((item) => item.id !== id);
-      setData(updatedData);
+      try {
+        await axios.delete(`http://localhost:5000/api/v1/products/${id}`, {
+          withCredentials: true,
+        });
 
-      // Keep filter in sync with updated data
-      if (category === "All") {
-        setFilter(updatedData);
-      } else {
-        setFilter(
-          updatedData.filter(
-            (item) => item.category.toLowerCase() === category.toLowerCase()
-          )
-        );
+        const updatedData = data.filter((item) => item._id !== id);
+        setData(updatedData);
+
+        if (category === "All") {
+          setFilter(updatedData);
+        } else {
+          setFilter(
+            updatedData.filter((item) => item.category?.name === category)
+          );
+        }
+
+        toast.success("Product deleted successfully");
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Error deleting product");
       }
     }
   };
 
-  // Skeleton loader
+  // ✅ Skeleton loader
   const Loading = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 animate-pulse">
       {Array.from({ length: 8 }).map((_, index) => (
         <div
           key={index}
-          className="border rounded-lg p-6 shadow-lg bg-white min-h-[400px]"
+          className="border rounded-xl p-6 shadow-lg bg-white min-h-[420px]"
         >
           <Skeleton height={220} />
           <Skeleton className="mt-4" count={3} />
@@ -85,15 +121,15 @@ const ProductListAdmin = () => {
     </div>
   );
 
-  // Render products
+  // ✅ Render approved products
   const ShowProducts = () => (
     <>
-      {/* Dropdown filter */}
-      <div className="flex justify-start mb-6" ref={dropdownRef}>
-        <div className="relative w-52">
+      {/* Category Filter */}
+      <div className="flex justify-center mb-8" ref={dropdownRef}>
+        <div className="relative w-64">
           <button
             onClick={() => setDropdownOpen((prev) => !prev)}
-            className="w-full bg-white border border-gray-300 rounded-lg shadow-sm pl-4 pr-10 py-2 text-left text-gray-700 font-medium hover:border-gray-800 flex justify-between items-center"
+            className="w-full bg-white border border-gray-300 rounded-lg shadow-sm pl-4 pr-10 py-3 text-lg text-gray-700 font-semibold hover:border-gray-800 flex justify-between items-center"
           >
             {category === "All"
               ? "All Categories"
@@ -102,15 +138,19 @@ const ProductListAdmin = () => {
           </button>
           {dropdownOpen && (
             <div className="absolute mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-auto">
-              {["All", "spices", "fruits", "vegetables"].map((catOption) => (
+              <div
+                onClick={() => filterProduct(null, "All")}
+                className="cursor-pointer px-4 py-3 hover:bg-gray-100 text-lg transition"
+              >
+                All Categories
+              </div>
+              {categories.map((catOption) => (
                 <div
-                  key={catOption}
-                  onClick={() => filterProduct(catOption)}
-                  className="cursor-pointer px-4 py-2 hover:bg-gray-100 transition"
+                  key={catOption._id}
+                  onClick={() => filterProduct(catOption._id, catOption.name)}
+                  className="cursor-pointer px-4 py-3 hover:bg-gray-100 text-lg transition"
                 >
-                  {catOption === "All"
-                    ? "All Categories"
-                    : catOption.charAt(0).toUpperCase() + catOption.slice(1)}
+                  {catOption.name.charAt(0).toUpperCase() + catOption.name.slice(1)}
                 </div>
               ))}
             </div>
@@ -118,64 +158,79 @@ const ProductListAdmin = () => {
         </div>
       </div>
 
-      {/* Product grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
         {filter.map((product) => (
           <div
-            key={product.id}
-            className="bg-white rounded-xl shadow-md hover:shadow-2xl transition overflow-hidden relative flex flex-col h-full group"
+            key={product._id}
+            className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition overflow-hidden relative flex flex-col h-full group border border-gray-200"
           >
-            {/* Hover Delete button */}
-            <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Delete button on hover */}
+            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                onClick={() => deleteProduct(product.id)}
+                onClick={() => deleteProduct(product._id)}
                 className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg flex items-center justify-center"
               >
                 <FaTrash />
               </button>
             </div>
 
-            {/* Product image */}
+            {/* Product Image */}
             <div className="flex justify-center items-center bg-gray-50 h-64 p-4">
-              <div className="w-48 h-48 flex items-center justify-center overflow-hidden rounded-md">
+              <div className="w-48 h-48 flex items-center justify-center overflow-hidden rounded-lg">
                 <img
-                  src={product.image}
-                  alt={product.title}
+                  src={product.image?.url || "/placeholder.png"}
+                  alt={product.name}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
               </div>
             </div>
 
-            {/* Product info */}
-            <div className="p-4 flex-1 flex flex-col justify-between">
+            {/* Product Info */}
+            <div className="p-5 flex-1 flex flex-col justify-between">
               <div>
-                <h2 className="text-lg font-semibold mb-2 line-clamp-2">
-                  {product.title}
+                <h2 className="text-xl font-bold mb-2 text-gray-800 line-clamp-2">
+                  {product.name}
                 </h2>
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {product.description}
+                  {product.description || "No description available"}
                 </p>
               </div>
               <div className="mt-auto flex justify-between items-center">
-                <p className="text-xl font-bold">₹ {product.price}</p>
+                <p className="text-2xl font-extrabold text-green-700">
+                  ₹ {product.price}
+                </p>
                 {product.weight && (
                   <span className="text-sm text-gray-500">
                     {product.weight}
                   </span>
                 )}
               </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Category:{" "}
+                <span className="font-semibold">
+                  {product.category?.name || "N/A"}
+                </span>
+              </p>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Empty State */}
+      {filter.length === 0 && (
+        <p className="text-center text-gray-500 mt-6 text-lg">
+          No approved products found.
+        </p>
+      )}
     </>
   );
 
   return (
-    <section className="container mx-auto py-12 px-4 mt-20 min-h-screen">
-      <h2 className="text-4xl font-bold text-center mb-8">
-        Admin Product List
+    <section className="container mx-auto py-12 px-6 mt-20 min-h-screen">
+      <h2 className="text-5xl font-extrabold text-center mb-12 text-gray-900">
+        ✅ Approved Product List
       </h2>
       {loading ? <Loading /> : <ShowProducts />}
     </section>

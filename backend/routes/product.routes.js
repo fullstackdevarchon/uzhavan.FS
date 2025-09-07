@@ -5,13 +5,14 @@ import {
   getProductsByCategory,
   getSellerProducts,
   updateProductStatus,
+  deleteProduct,   // ✅ import new controller
 } from "../controllers/product.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
 import { singleUpload } from "../middleware/multer.js";
 
 const router = express.Router();
 
-// Seller: create product (always pending by default)
+// Seller: create product (pending by default)
 router.post(
   "/create",
   isAuthenticated,
@@ -45,6 +46,14 @@ router.patch(
   isAuthenticated,
   authorizeRoles(["admin"]),
   updateProductStatus
+);
+
+// ✅ Admin: delete product
+router.delete(
+  "/:id",
+  isAuthenticated,
+  authorizeRoles(["admin"]),
+  deleteProduct
 );
 
 export default router;

@@ -1,11 +1,13 @@
 // src/pages/Admin/Inventory.jsx
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   FaExclamationTriangle,
   FaBoxOpen,
   FaSearch,
   FaFilter,
 } from "react-icons/fa";
+import toast from "react-hot-toast";
 
 const Inventory = () => {
   const [inventory, setInventory] = useState([]);
@@ -13,15 +15,46 @@ const Inventory = () => {
   const [filter, setFilter] = useState("All");
 
   useEffect(() => {
-    // 🔧 Replace with API
-    const mockData = [
-      { id: 1, product: "Fresh Apples", stock: 5, status: "Low Stock" },
-      { id: 2, product: "Tomatoes", stock: 0, status: "Out of Stock" },
-      { id: 3, product: "Red Chilli Powder", stock: 200, status: "In Stock" },
-      { id: 4, product: "Organic Rice", stock: 18, status: "Low Stock" },
-      { id: 5, product: "Green Tea Bags", stock: 0, status: "Out of Stock" },
-    ];
-    setInventory(mockData);
+    const fetchInventory = async () => {
+      try {
+        // ✅ Include withCredentials so cookies/JWT go with the request
+        const res = await axios.get(
+          "http://localhost:5000/api/v1/products/all",
+          { withCredentials: true }
+        );
+
+        if (res.data && res.data.success) {
+          // ✅ Only approved products
+          const approvedProducts = res.data.products.filter(
+            (p) => p.status === "approved"
+          );
+
+          const formatted = approvedProducts.map((p) => {
+            let stockStatus = "In Stock";
+            if (p.quantity === 0) stockStatus = "Out of Stock";
+            else if (p.quantity > 0 && p.quantity <= 10)
+              stockStatus = "Low Stock";
+
+            return {
+              id: p._id,
+              product: p.name,
+              stock: p.quantity,
+              status: stockStatus,
+            };
+          });
+
+          setInventory(formatted);
+        } else {
+          toast.error("Failed to load inventory");
+        }
+      } catch (err) {
+        console.error("❌ Inventory fetch error:", err);
+        toast.error(
+          err.response?.data?.message || "Error fetching inventory"
+        );
+      }
+    };
+    fetchInventory();
   }, []);
 
   // 🔍 Filtered data
@@ -38,14 +71,14 @@ const Inventory = () => {
     if (status === "Low Stock")
       return (
         <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs md:text-sm font-semibold inline-flex items-center gap-1 shadow-sm">
-          <FaExclamationTriangle className="text-yellow-600 text-xs md:text-sm" />{" "}
+          <FaExclamationTriangle className="text-yellow-600 text-xs md:text-sm" />
           Low Stock
         </span>
       );
     if (status === "Out of Stock")
       return (
         <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs md:text-sm font-semibold inline-flex items-center gap-1 shadow-sm">
-          <FaExclamationTriangle className="text-red-600 text-xs md:text-sm" />{" "}
+          <FaExclamationTriangle className="text-red-600 text-xs md:text-sm" />
           Out of Stock
         </span>
       );
@@ -60,7 +93,8 @@ const Inventory = () => {
     <div className="p-4 md:p-10 max-w-7xl mx-auto bg-gray-50 min-h-screen">
       {/* Page Title */}
       <h2 className="text-xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8 flex items-center gap-3">
-        <FaBoxOpen className="text-blue-600 text-lg md:text-2xl" /> Inventory & Stock Alerts
+        <FaBoxOpen className="text-blue-600 text-lg md:text-2xl" /> Approved
+        Inventory & Stock Alerts
       </h2>
 
       {/* Filters */}
@@ -124,19 +158,21 @@ const Inventory = () => {
           ))
         ) : (
           <div className="p-6 text-center text-gray-500 italic text-sm md:text-base">
-            No products found
+            No approved products found
           </div>
         )}
       </div>
 
       {/* Footer Summary */}
       <div className="p-4 bg-gray-100 text-gray-700 text-sm md:text-base flex flex-col md:flex-row justify-between items-center gap-2 md:gap-0 mt-6 rounded-xl">
-        <span>Total Products: {filteredInventory.length}</span>
+        <span>Total Approved Products: {filteredInventory.length}</span>
         <span className="font-semibold">
           Low / Out of Stock:{" "}
-          {filteredInventory.filter(
-            (i) => i.status === "Low Stock" || i.status === "Out of Stock"
-          ).length}
+          {
+            filteredInventory.filter(
+              (i) => i.status === "Low Stock" || i.status === "Out of Stock"
+            ).length
+          }
         </span>
       </div>
     </div>
