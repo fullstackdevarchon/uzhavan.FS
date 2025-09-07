@@ -1,59 +1,19 @@
+// backend/models/Product.js
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "Please enter product name"],
-    trim: true
-  },
-  price: {
-    type: Number,
-    required: [true, "Please enter product price"]
-  },
-  description: {
-    type: String,
-    required: [true, "Please enter product description"]
-  },
-  weight: {
-    type: String,
-    required: [true, "Please enter product weight"]
-  },
-  quantity: {
-    type: Number,
-    required: [true, "Please enter product quantity"]
-  },
-  category: {
-    type: String,
-    required: [true, "Please select a category"],
-    enum: {
-      values: ["spices", "vegetables", "fruits"],
-      message: "Please select correct category"
-    }
-  },
+  name: { type: String, required: true },
+  description: { type: String },
+  price: { type: Number, required: true },
+  weight: { type: String, required: true }, // changed from Number → String
+  quantity: { type: Number, default: 1 },
+  category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+  seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   image: {
-    public_id: {
-      type: String,
-      required: true
-    },
-    url: {
-      type: String,
-      required: true
-    }
+    public_id: { type: String },
+    url: { type: String },
   },
-  seller: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ["pending", "approved", "rejected"],
-    default: "pending"
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+  status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
+}, { timestamps: true });
 
 export default mongoose.model("Product", productSchema);

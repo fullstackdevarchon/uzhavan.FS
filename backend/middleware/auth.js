@@ -1,9 +1,13 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js"; // Updated import path
+import User from "../models/User.js";
 
+// Middleware: check if user is logged in
 export const isAuthenticated = async (req, res, next) => {
   try {
-    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+    const token =
+      req.cookies.token ||
+      (req.headers.authorization &&
+        req.headers.authorization.split(" ")[1]);
 
     if (!token) {
       return res.status(401).json({
@@ -13,24 +17,45 @@ export const isAuthenticated = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
     req.user = await User.findById(decoded.id);
+
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "User not found" });
+    }
+
+    console.log("✅ Authenticated user:", {
+      id: req.user._id,
+      role: req.user.role,
+      email: req.user.email,
+    });
+
     next();
   } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: "Invalid token",
-    });
+    console.error("❌ Auth error:", error.message);
+    res.status(401).json({ success: false, message: "Invalid token" });
   }
 };
 
+// Middleware: check if user has specific role(s)
 export const authorizeRoles = (roles) => {
   return (req, res, next) => {
+    console.log(
+      "🔎 Checking role:",
+      req.user.role,
+      "Allowed roles:",
+      roles
+    );
+
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: "Not authorized to access this resource",
+        message: `Forbidden. Only ${roles.join(", ")} can perform this action`,
       });
     }
+
     next();
   };
 };

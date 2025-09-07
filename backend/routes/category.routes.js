@@ -9,13 +9,15 @@ import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// 🔒 Admin routes
+// 🔒 Admin & Seller route for fetching all categories
 router.get(
   "/all",
   isAuthenticated,
-  authorizeRoles(["admin"]),
+  authorizeRoles(["admin", "seller"]), // ✅ added 'seller'
   getAllCategories
 );
+
+// 🔒 Admin-only routes
 router.patch(
   "/:id/toggle",
   isAuthenticated,
@@ -29,7 +31,7 @@ router.patch(
   updateCategoryLimit
 );
 
-// 🌍 Public route
+// 🌍 Public route (enabled categories)
 router.get("/enabled", getEnabledCategories);
 
 export default router;
