@@ -1,252 +1,273 @@
-import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import { Navbar, Footer } from "../../components";
+// src/pages/Checkout.jsx
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { delCart } from "../../redux/action";
 
 const Checkout = () => {
-  const state = useSelector((state) => state.handleCart);
+  const cart = useSelector((state) => state.handleCart);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  // Loading state
-  const [loading, setLoading] = useState(true);
+  const [address, setAddress] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    country: "India",
+    zip: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const shipping = cart.length > 0 ? 30 : 0;
+  const total = subtotal + shipping;
+
+  const token = localStorage.getItem("token");
+
+  // Fetch user profile to auto-fill address
+  const fetchProfile = async () => {
+    if (!token) return;
+    try {
+      const { data } = await axios.get("http://localhost:5000/api/profile/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setAddress({
+        fullName: data.fullName || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        street: data.address?.street || "",
+        city: data.address?.city || "",
+        state: data.address?.state || "",
+        country: data.address?.country || "India",
+        zip: data.address?.pincode || "",
+      });
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+      toast.error("Could not load user profile");
+    }
+  };
+
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600); // simulate delay
-    return () => clearTimeout(timer);
+    fetchProfile();
+    // eslint-disable-next-line
   }, []);
 
-  const EmptyCart = () => (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-      <h4 className="text-3xl font-semibold text-gray-700 mb-6">
-        No items in Cart
-      </h4>
-      <Link
-        to="/buyer-dashboard/products"
-        className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
-      >
-        <i className="fa fa-arrow-left mr-2"></i> Continue Shopping
-      </Link>
-    </div>
-  );
+  // Handle place order
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
 
-  const ShowCheckout = () => {
-    let subtotal = 0;
-    let shipping = 30.0;
-    let totalItems = 0;
-    state.forEach((item) => {
-      subtotal += item.price * item.qty;
-      totalItems += item.qty;
-    });
+    if (!token) {
+      toast.error("Please login as Buyer to place order");
+      return navigate("/login");
+    }
 
-    return (
-      <section className="min-h-[70vh] bg-gray-50 py-10 px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Order Summary */}
-          <div className="lg:col-span-1 bg-white shadow-lg rounded-xl p-6 h-fit">
-            <h5 className="text-2xl font-bold mb-6 text-gray-800">
-              Order Summary
-            </h5>
-            <ul className="space-y-4 text-gray-700">
-              <li className="flex justify-between">
-                <span>Products ({totalItems})</span>
-                <span>₹{subtotal.toFixed(2)}</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Shipping</span>
-                <span>₹{shipping.toFixed(2)}</span>
-              </li>
-              <li className="flex justify-between font-bold text-gray-900 text-lg border-t pt-4">
-                <span>Total</span>
-                <span>₹{(subtotal + shipping).toFixed(2)}</span>
-              </li>
-            </ul>
-          </div>
+    setLoading(true);
+    try {
+      const orderData = {
+        products: cart.map((item) => ({
+          product: item.id || item._id, // ✅ support both
+          qty: item.qty,
+          price: item.price,
+        })),
+        address,
+      };
 
-          {/* Billing + Payment */}
-          <div className="lg:col-span-2 bg-white shadow-lg rounded-xl p-6">
-            <h4 className="text-2xl font-bold mb-6 text-gray-800">
-              Billing Address
-            </h4>
-            <form className="space-y-6">
-              {/* Name */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    required
-                  />
-                </div>
-              </div>
+      const { data } = await axios.post(
+        "http://localhost:5000/api/v1/orders/create",
+        orderData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
-              {/* Email */}
-              <div>
-                <label className="block mb-1 font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
-
-              {/* Address */}
-              <div>
-                <label className="block mb-1 font-medium text-gray-700">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="1234 Main St"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1 font-medium text-gray-700">
-                  Address 2 (Optional)
-                </label>
-                <input
-                  type="text"
-                  className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                  placeholder="Apartment or suite"
-                />
-              </div>
-
-              {/* Country / State / Zip */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    Country
-                  </label>
-                  <select className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <option value="">Choose...</option>
-                    <option>India</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    State
-                  </label>
-                  <select className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <option value="">Choose...</option>
-                    <option>Punjab</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    Zip
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    required
-                  />
-                </div>
-              </div>
-
-              <hr className="my-6" />
-
-              {/* Payment */}
-              <h4 className="text-2xl font-bold mb-4 text-gray-800">Online Payment</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    Name on Card
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    placeholder="Full name as displayed on card"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    Card Number
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    placeholder="xxxx-xxxx-xxxx-xxxx"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    Expiration
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    placeholder="MM/YY"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-1 font-medium text-gray-700">
-                    CVV
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled
-                className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg shadow hover:bg-indigo-700 transition mt-6"
-              >
-                Place Order
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-    );
+      if (data.success) {
+        toast.success("✅ Order Placed (Cash on Delivery)");
+        cart.forEach((item) => dispatch(delCart(item)));
+        navigate("/buyer-dashboard/orders");
+      } else {
+        toast.error(data.message || "Failed to place order");
+      }
+    } catch (err) {
+      console.error("❌ Order error:", err);
+      toast.error(
+        err.response?.data?.message || "Order failed. Please login as Buyer."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50 py-10 px-4 pt-28">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
-            Checkout
-          </h1>
-          {loading ? (
-            <div className="flex justify-center items-center min-h-[60vh]">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600"></div>
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
+          Checkout
+        </h1>
+
+        {cart.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <h2 className="text-3xl font-semibold text-gray-700 mb-6">
+              Your Cart is Empty
+            </h2>
+            <Link
+              to="/buyer-dashboard/products"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        ) : (
+          <form
+            onSubmit={handlePlaceOrder}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            {/* Address Form */}
+            <div className="lg:col-span-2 bg-white shadow-lg rounded-xl p-6 space-y-4">
+              <h4 className="text-2xl font-bold text-gray-800 mb-4">
+                Billing Address
+              </h4>
+
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={address.fullName}
+                onChange={(e) =>
+                  setAddress({ ...address, fullName: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-2"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={address.email}
+                onChange={(e) =>
+                  setAddress({ ...address, email: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-2"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Phone"
+                value={address.phone}
+                onChange={(e) =>
+                  setAddress({ ...address, phone: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-2"
+                required
+              />
+              <input
+                type="text"
+                placeholder="Street"
+                value={address.street}
+                onChange={(e) =>
+                  setAddress({ ...address, street: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-2"
+                required
+              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  type="text"
+                  placeholder="City"
+                  value={address.city}
+                  onChange={(e) =>
+                    setAddress({ ...address, city: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-2"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="State"
+                  value={address.state}
+                  onChange={(e) =>
+                    setAddress({ ...address, state: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-2"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Zip"
+                  value={address.zip}
+                  onChange={(e) =>
+                    setAddress({ ...address, zip: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-4 py-2"
+                  required
+                />
+              </div>
+              <select
+                value={address.country}
+                onChange={(e) =>
+                  setAddress({ ...address, country: e.target.value })
+                }
+                className="w-full border rounded-lg px-4 py-2"
+              >
+                <option value="India">India</option>
+              </select>
             </div>
-          ) : state.length ? (
-            <ShowCheckout />
-          ) : (
-            <EmptyCart />
-          )}
-        </div>
+
+            {/* Order Summary */}
+            <div className="bg-white shadow-lg rounded-xl p-6 h-fit">
+              <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+
+              {/* Product List */}
+              <ul className="divide-y divide-gray-200 mb-6">
+                {cart.map((item, index) => (
+                  <li key={index} className="flex justify-between py-2">
+                    <div>
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-gray-500">
+                        Qty: {item.qty} × ₹{item.price}
+                      </p>
+                    </div>
+                    <p className="font-semibold">
+                      ₹{(item.price * item.qty).toFixed(2)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+
+              <ul className="space-y-3">
+                <li className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>Shipping</span>
+                  <span>₹{shipping.toFixed(2)}</span>
+                </li>
+                <li className="flex justify-between font-bold text-lg border-t pt-4">
+                  <span>Total</span>
+                  <span>₹{total.toFixed(2)}</span>
+                </li>
+              </ul>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg shadow hover:bg-green-700 transition"
+              >
+                {loading ? "Placing Order..." : "Place Order (Cash on Delivery)"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
-      <Footer />
-    </>
+    </div>
   );
 };
 

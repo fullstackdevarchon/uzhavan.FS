@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -5,11 +6,11 @@ import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setAuth } = useAuth(); // ✅ from context
+  const { setAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
+    password: "", // ✅ correct field name
   });
 
   const handleChange = (e) => {
@@ -29,16 +30,17 @@ const Login = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
+        credentials: "include", // ✅ allow cookies (if backend sets them)
         body: JSON.stringify({
           email: formData.email,
-          pass: formData.password, // 🔑 backend expects `pass`
+          password: formData.password, // ✅ fixed to match backend
         }),
       });
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok) {
+        // ✅ Save token & role for persistence
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.user.role);
 
@@ -66,7 +68,7 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Admin Login
+            Admin Lo
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">

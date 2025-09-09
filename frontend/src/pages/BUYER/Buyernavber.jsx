@@ -1,11 +1,12 @@
 // src/components/BuyerNavbar.jsx
 import React, { useState, useEffect } from "react";
-import { NavLink, Outlet, useNavigate, Link } from "react-router-dom";
+import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   FaBoxOpen,
   FaShoppingCart,
   FaClipboardList,
+  FaUser,
   FaSignOutAlt,
   FaBars,
   FaTimes,
@@ -28,7 +29,7 @@ const BuyerNavbar = () => {
 
   const handleLogout = () => {
     console.log("🔓 Buyer logout initiated");
-    logout(); // This will clear all auth data and redirect
+    logout(); // Clear auth & redirect
   };
 
   const navLinkClass = ({ isActive }) =>
@@ -46,7 +47,7 @@ const BuyerNavbar = () => {
       {/* Navbar */}
       <nav className="bg-green-600 fixed top-0 left-0 w-full shadow-md z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Left: Logo + Title */}
+          {/* Logo + Title */}
           <Link
             to="/buyer-dashboard"
             className="flex items-center gap-3 flex-shrink-0"
@@ -89,6 +90,14 @@ const BuyerNavbar = () => {
                 ) : (
                   <>Cart ({cartState?.length || 0})</>
                 )}
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/buyer-dashboard/profile" className={navLinkClass}>
+                <span className={iconCircleClass}>
+                  <FaUser />
+                </span>
+                Profile
               </NavLink>
             </li>
             <li>
@@ -171,6 +180,23 @@ const BuyerNavbar = () => {
               )}
             </NavLink>
 
+            <NavLink
+              to="profile"
+              onClick={() => setIsOpen(false)}
+              className={({ isActive }) =>
+                `block py-3 flex items-center gap-2 ${
+                  isActive
+                    ? "text-yellow-400 font-semibold"
+                    : "text-white hover:text-yellow-300"
+                }`
+              }
+            >
+              <span className={iconCircleClass}>
+                <FaUser />
+              </span>
+              Profile
+            </NavLink>
+
             <button
               onClick={() => {
                 handleLogout();
@@ -189,7 +215,7 @@ const BuyerNavbar = () => {
 
       {/* Content Area */}
       <main className="flex-1 p-6 bg-gray-50 mt-20">
-        <Outlet /> {/* ✅ REQUIRED for nested routing */}
+        <Outlet /> {/* Nested routing */}
       </main>
     </div>
   );

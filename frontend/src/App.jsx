@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate, useParams, Outlet, Link } from "react-router-dom";
+import { Routes, Route, Navigate, useParams, Outlet } from "react-router-dom";
 import Cookies from "js-cookie";
 
 // Pages
@@ -22,6 +22,7 @@ import Checkout from "./pages/BUYER/Checkout";
 import BuyerProduct from "./pages/BUYER/Product";
 import BuyerDashboard from "./pages/BuyerDashboard";
 import BuyerDashboardOverview from "./pages/BUYER/DashboardOverview";
+import Profile from "./pages/BUYER/Profile"; // ✅ Profile page
 
 // Seller
 import SellerDashboard from "./pages/SellerDashboard";
@@ -34,6 +35,9 @@ import SellerDashboardOverview from "./pages/Seller/DashboardOverview";
 import ScrollToTop from "./components/ScrollToTop";
 import { Toaster } from "react-hot-toast";
 
+// ------------------------
+// Role-based Login Route
+// ------------------------
 function LoginWithRole() {
   const { role } = useParams();
   const validRoles = ["buyer", "seller"];
@@ -41,7 +45,9 @@ function LoginWithRole() {
   return <Login />;
 }
 
-// ✅ Authentication Hook
+// ------------------------
+// Authentication Hook
+// ------------------------
 function useAuth() {
   const token = Cookies.get("token") || localStorage.getItem("token");
   const userRole = Cookies.get("role") || localStorage.getItem("role");
@@ -57,7 +63,9 @@ function useAuth() {
   return { isAuthenticated, user, userRole, token };
 }
 
-// ✅ Protected Route
+// ------------------------
+// Protected Route
+// ------------------------
 function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, userRole } = useAuth();
 
@@ -77,11 +85,13 @@ function ProtectedRoute({ children, allowedRoles }) {
   return children;
 }
 
-// ✅ Default redirect → Now `/` = Home page
+// ------------------------
+// Default redirect
+// ------------------------
 function AuthRedirect() {
   const { isAuthenticated, userRole } = useAuth();
 
-  // 👉 If you want logged-in users to auto-redirect to dashboard, uncomment below:
+  // Uncomment to auto-redirect logged-in users to dashboard
   // if (isAuthenticated) {
   //   return (
   //     <Navigate
@@ -91,10 +101,12 @@ function AuthRedirect() {
   //   );
   // }
 
-  // Default: show public home
   return <Home />;
 }
 
+// ------------------------
+// App Component
+// ------------------------
 function App() {
   return (
     <>
@@ -103,7 +115,7 @@ function App() {
         {/* Default page */}
         <Route path="/" element={<AuthRedirect />} />
 
-        {/* Public */}
+        {/* Public Pages */}
         <Route path="/home" element={<Home />} />
         <Route path="/product" element={<Products />} />
         <Route path="/product/:id" element={<Product />} />
@@ -111,12 +123,12 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/cart" element={<Cart />} />
 
-        {/* Auth */}
+        {/* Auth Routes */}
         <Route path="/login" element={<Navigate to="/login/buyer" replace />} />
         <Route path="/login/:role" element={<LoginWithRole />} />
         <Route path="/register" element={<Navigate to="/login/buyer" replace />} />
 
-        {/* Buyer Routes - Using nested routing with BuyerNavbar layout */}
+        {/* Buyer Dashboard */}
         <Route
           path="/buyer-dashboard"
           element={
@@ -131,9 +143,10 @@ function App() {
           <Route path="orders" element={<OrderList />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<Checkout />} />
+          <Route path="profile" element={<Profile />} /> {/* ✅ Profile */}
         </Route>
 
-        {/* Seller Routes - Using nested routing with SellerNavbar layout */}
+        {/* Seller Dashboard */}
         <Route
           path="/seller"
           element={
@@ -147,8 +160,9 @@ function App() {
           <Route path="add-product" element={<AddProduct />} />
           <Route path="my-products" element={<MyProducts />} />
           <Route path="check-status" element={<CheckStatus />} />
+          <Route path="profile" element={<Profile />} /> {/* ✅ Profile */}
         </Route>
-        
+
         {/* Redirect old seller dashboard route */}
         <Route path="/seller/dashboard" element={<Navigate to="/seller" replace />} />
 

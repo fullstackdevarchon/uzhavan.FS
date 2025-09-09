@@ -9,6 +9,8 @@ import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/product.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import orderRoutes from "./routes/orderRoutes.js"; // ✅ NEW
+import profileRoutes from "./routes/profileRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -31,11 +33,16 @@ app.use(
   })
 );
 
+
+
 // API routes
 app.use("/api/users", userRoutes);
 app.use("/api/v1/products", productRoutes);
 app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/v1/orders", orderRoutes);
+app.use("/api/profile", profileRoutes); // ✅ Mount profile routes
+ // ✅ Mount orders API
 
 // MongoDB connection
 mongoose

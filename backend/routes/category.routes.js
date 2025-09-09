@@ -13,9 +13,12 @@ const router = express.Router();
 router.get(
   "/all",
   isAuthenticated,
-  authorizeRoles(["admin", "seller"]), // ✅ added 'seller'
+  authorizeRoles(["admin", "seller"]),
   getAllCategories
 );
+
+// 🌍 Public route (enabled categories)
+router.get("/enabled", getEnabledCategories);
 
 // 🔒 Admin-only routes
 router.patch(
@@ -24,14 +27,12 @@ router.patch(
   authorizeRoles(["admin"]),
   toggleCategory
 );
+
 router.patch(
   "/:id/limit",
   isAuthenticated,
   authorizeRoles(["admin"]),
   updateCategoryLimit
 );
-
-// 🌍 Public route (enabled categories)
-router.get("/enabled", getEnabledCategories);
 
 export default router;

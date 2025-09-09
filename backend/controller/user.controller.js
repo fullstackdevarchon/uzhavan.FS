@@ -20,6 +20,7 @@ export const getUsers = async (req, res) => {
     const users = await User.find().select("-pass"); // exclude password
     res.json(users);
   } catch (error) {
+    console.error("❌ getUsers error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -50,9 +51,9 @@ export const registerUser = async (req, res) => {
     const newUser = new User({
       fullName,
       email,
-      pass: hashedPassword,
+      pass: hashedPassword, // make sure your User model has "pass"
       role,
-      isApproved: role === "seller" ? false : true, // sellers require approval
+      isApproved: role === "seller" ? false : true,
     });
 
     await newUser.save();
@@ -67,6 +68,7 @@ export const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("❌ registerUser error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -82,10 +84,10 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+pass");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Ensure password exists in DB
+    // Ensure password exists
     if (!user.pass) {
       return res.status(500).json({ message: "Password not set for this user" });
     }
@@ -93,6 +95,12 @@ export const loginUser = async (req, res) => {
     // Compare password
     const isMatch = await bcrypt.compare(pass, user.pass);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+
+    // Ensure JWT_SECRET exists
+    if (!process.env.JWT_SECRET) {
+      console.error("❌ Missing JWT_SECRET in environment variables");
+      return res.status(500).json({ message: "Server configuration error" });
+    }
 
     // Generate JWT token
     const token = jwt.sign(
@@ -115,24 +123,35 @@ export const loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.error("❌ loginUser error:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
 // =======================
-// Admin login (optional)
+// Admin login
 // =======================
 export const adminLogin = async (req, res) => {
   try {
     const { email, pass } = req.body;
+    console.log('email',email)
+    console.log('pass',pass)
 
     if (!email || !pass) return res.status(400).json({ message: "Email and password required" });
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+pass");
+    console.log('user',user)
     if (!user || user.role !== "admin") return res.status(401).json({ message: "Not authorized" });
+    console.log('userpass',user.pass)
 
     const isMatch = await bcrypt.compare(pass, user.pass);
+    console.log('isMatch',isMatch)
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+
+    if (!process.env.JWT_SECRET) {
+      console.error("❌ Missing JWT_SECRET in environment variables");
+      return res.status(500).json({ message: "Server configuration error" });
+    }
 
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "1d",
@@ -151,6 +170,7 @@ export const adminLogin = async (req, res) => {
       token,
     });
   } catch (error) {
+    console.error("❌ adminLogin error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -185,6 +205,7 @@ export const verifyToken = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("❌ verifyToken error:", error);
     res.status(401).json({ message: "Invalid token" });
   }
 };

@@ -1,13 +1,10 @@
 import Category from "../models/Category.js";
 
-// Get all categories (Admin)
+// Get all categories (Admin/Seller)
 export const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ name: 1 });
-    res.status(200).json({
-      success: true,
-      categories,
-    });
+    res.status(200).json({ success: true, categories });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -21,10 +18,7 @@ export const getAllCategories = async (req, res) => {
 export const getEnabledCategories = async (req, res) => {
   try {
     const categories = await Category.find({ enabled: true }).sort({ name: 1 });
-    res.status(200).json({
-      success: true,
-      categories,
-    });
+    res.status(200).json({ success: true, categories });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -39,10 +33,7 @@ export const toggleCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
     if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found",
-      });
+      return res.status(404).json({ success: false, message: "Category not found" });
     }
 
     category.enabled = !category.enabled;
@@ -81,10 +72,7 @@ export const updateCategoryLimit = async (req, res) => {
     );
 
     if (!category) {
-      return res.status(404).json({
-        success: false,
-        message: "Category not found",
-      });
+      return res.status(404).json({ success: false, message: "Category not found" });
     }
 
     res.status(200).json({

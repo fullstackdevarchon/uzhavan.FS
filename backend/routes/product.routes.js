@@ -1,3 +1,4 @@
+// routes/productRoutes.js
 import express from "express";
 import {
   createProduct,
@@ -5,14 +6,24 @@ import {
   getProductsByCategory,
   getSellerProducts,
   updateProductStatus,
-  deleteProduct, // ✅ shared controller
+  deleteProduct,
+  markAsSold,
+  getBuyerProducts,
+  getProductById,        // ✅ Add this import
+  getSimilarProducts,    // Optional: for similar products feature
 } from "../controllers/product.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
 import { singleUpload } from "../middleware/multer.js";
 
 const router = express.Router();
 
-// Seller: create product (pending by default)
+/**
+ * =========================
+ * SELLER ROUTES
+ * =========================
+ */
+
+// Seller: Create a product (status = pending)
 router.post(
   "/create",
   isAuthenticated,
@@ -21,7 +32,7 @@ router.post(
   createProduct
 );
 
-// Seller: get own products
+// Seller: Get all their own products
 router.get(
   "/seller",
   isAuthenticated,
@@ -29,10 +40,13 @@ router.get(
   getSellerProducts
 );
 
-// Public: get products by category
-router.get("/category/:category", getProductsByCategory);
+/**
+ * =========================
+ * ADMIN ROUTES
+ * =========================
+ */
 
-// Admin: get all products
+// Admin: Get all products
 router.get(
   "/all",
   isAuthenticated,
@@ -40,7 +54,7 @@ router.get(
   getAllProducts
 );
 
-// Admin: update product status
+// Admin: Update product status (approved / rejected / pending)
 router.patch(
   "/:id/status",
   isAuthenticated,
@@ -48,7 +62,34 @@ router.patch(
   updateProductStatus
 );
 
-// ✅ Delete product (Admin → any product, Seller → only their own)
+// Admin & Seller: Delete product
+// Admin can delete any product; Seller can delete only their own
 router.delete("/:id", isAuthenticated, deleteProduct);
+
+/**
+ * =========================
+ * PUBLIC / BUYER ROUTES
+ * =========================
+ */
+
+// Public: Get products by category (approved, available)
+router.get("/category/:category", getProductsByCategory);
+
+// Public: Get all approved & available products (buyer view)
+router.get("/buyer", getBuyerProducts);
+
+// Public: Get single product by ID
+router.get("/:id", getProductById);
+
+// Buyer: Purchase a product (mark as sold / reduce quantity)
+router.patch(
+  "/:id/sold",
+  isAuthenticated,
+  authorizeRoles(["buyer"]),
+  markAsSold
+);
+
+// Optional: Similar products by category (excluding current product)
+router.get("/similar/:categoryId/:productId", getSimilarProducts);
 
 export default router;

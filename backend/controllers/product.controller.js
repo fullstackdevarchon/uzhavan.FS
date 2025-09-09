@@ -1,4 +1,3 @@
-// controllers/productController.js
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import cloudinary from "../config/cloudinary.js";
@@ -23,7 +22,7 @@ const uploadToCloudinary = (fileBuffer, folder) => {
 };
 
 /**
- * ✅ CREATE PRODUCT (Seller)
+ * ✅ CREATE PRODUCT (Seller only)
  */
 export const createProduct = async (req, res) => {
   try {
@@ -55,6 +54,8 @@ export const createProduct = async (req, res) => {
         url: cloudinaryResponse.secure_url,
       },
       status: "pending",
+      sold: false,
+      buyers: [],
     });
 
     res.status(201).json({
@@ -79,7 +80,8 @@ export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find()
       .populate("category", "name")
-      .populate("seller", "fullName email");
+      .populate("seller", "fullName email")
+      .populate("buyers.user", "fullName email");
 
     res.status(200).json({ success: true, products });
   } catch (error) {
@@ -100,7 +102,9 @@ export const getSellerProducts = async (req, res) => {
       });
     }
 
-    const products = await Product.find({ seller: req.user._id }).populate("category", "name");
+    const products = await Product.find({ seller: req.user._id })
+      .populate("category", "name")
+      .populate("buyers.user", "fullName email");
 
     res.status(200).json({ success: true, products });
   } catch (error) {
@@ -113,7 +117,26 @@ export const getSellerProducts = async (req, res) => {
 };
 
 /**
- * ✅ GET PRODUCTS BY CATEGORY (approved only)
+ * ✅ GET PRODUCT BY ID (any user)
+ */
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id)
+      .populate("category", "name")
+      .populate("seller", "fullName email");
+
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+
+    res.status(200).json({ success: true, product });
+  } catch (error) {
+    console.error("❌ Error fetching product by ID:", error);
+    res.status(500).json({ success: false, message: "Error fetching product" });
+  }
+};
+
+/**
+ * ✅ GET PRODUCTS BY CATEGORY (approved only, in stock)
  */
 export const getProductsByCategory = async (req, res) => {
   try {
@@ -127,20 +150,39 @@ export const getProductsByCategory = async (req, res) => {
     const products = await Product.find({
       category,
       status: "approved",
+      quantity: { $gt: 0 },
     }).populate("seller", "fullName");
 
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error("❌ Error fetching products by category:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching products by category",
-    });
+    res.status(500).json({ success: false, message: "Error fetching products by category" });
   }
 };
 
 /**
- * ✅ UPDATE PRODUCT STATUS (Admin)
+ * ✅ GET SIMILAR PRODUCTS (exclude current)
+ */
+export const getSimilarProducts = async (req, res) => {
+  try {
+    const { category, excludeId } = req.query;
+
+    const products = await Product.find({
+      category,
+      _id: { $ne: excludeId },
+      status: "approved",
+      quantity: { $gt: 0 },
+    }).limit(10);
+
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    console.error("❌ Error fetching similar products:", error);
+    res.status(500).json({ success: false, message: "Error fetching similar products" });
+  }
+};
+
+/**
+ * ✅ UPDATE PRODUCT STATUS (Admin only)
  */
 export const updateProductStatus = async (req, res) => {
   try {
@@ -164,9 +206,7 @@ export const updateProductStatus = async (req, res) => {
     }
 
     const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
     res.status(200).json({
       success: true,
@@ -187,11 +227,8 @@ export const deleteProduct = async (req, res) => {
     const { id } = req.params;
 
     const product = await Product.findById(id);
-    if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
-    // If seller → ensure they own the product
     if (req.user.role === "seller" && product.seller.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -199,7 +236,6 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    // Delete product image from Cloudinary if exists
     if (product.image?.public_id) {
       try {
         await cloudinary.uploader.destroy(product.image.public_id);
@@ -211,12 +247,57 @@ export const deleteProduct = async (req, res) => {
 
     await product.deleteOne();
 
-    res.status(200).json({
-      success: true,
-      message: "Product deleted successfully",
-    });
+    res.status(200).json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
     console.error("❌ Error deleting product:", error);
     res.status(500).json({ success: false, message: "Error deleting product" });
+  }
+};
+
+/**
+ * ✅ MARK PRODUCT AS SOLD (Buyer purchase)
+ */
+export const markAsSold = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== "buyer") {
+      return res.status(403).json({ success: false, message: "Forbidden. Only buyers can purchase products" });
+    }
+
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+
+    if (product.status !== "approved") return res.status(400).json({ success: false, message: "Product not available for purchase" });
+    if (product.quantity <= 0) return res.status(400).json({ success: false, message: "Product out of stock" });
+
+    product.quantity -= 1;
+    product.buyers = product.buyers || [];
+    product.buyers.push({ user: req.user._id, purchasedAt: new Date() });
+    if (product.quantity === 0) product.sold = true;
+
+    await product.save();
+
+    res.status(200).json({ success: true, message: "Product purchased successfully", product });
+  } catch (error) {
+    console.error("❌ Error marking product as sold:", error);
+    res.status(500).json({ success: false, message: "Error marking product as sold" });
+  }
+};
+
+/**
+ * ✅ GET PRODUCTS FOR BUYER (approved, in stock, optional category)
+ */
+export const getBuyerProducts = async (req, res) => {
+  try {
+    const { category } = req.query;
+    const filter = { status: "approved", quantity: { $gt: 0 } };
+    if (category) filter.category = category;
+
+    const products = await Product.find(filter).populate("category", "name");
+
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    console.error("❌ Error fetching buyer products:", error);
+    res.status(500).json({ success: false, message: "Error fetching buyer products" });
   }
 };

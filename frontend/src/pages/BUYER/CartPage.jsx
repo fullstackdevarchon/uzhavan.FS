@@ -41,30 +41,53 @@ const CartPage = () => {
                   key={item.id}
                   className="bg-white rounded-xl shadow-md p-6 flex items-center justify-between"
                 >
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                      {item.title}
-                    </h3>
-                    <p className="text-gray-600 mb-1">Price: ₹{item.price}</p>
-                    <div className="flex items-center mt-2 space-x-2">
-                      <button
-                        onClick={() => dispatch(delCart(item))}
-                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
-                      >
-                        <FaMinus />
-                      </button>
-                      <span className="px-4 py-1 bg-gray-100 rounded">
-                        {item.qty}
-                      </span>
-                      <button
-                        onClick={() => dispatch(addCart(item))}
-                        className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
-                      >
-                        <FaPlus />
-                      </button>
+                  {/* Product Info */}
+                  <div className="flex items-center space-x-6">
+                    {/* Product Image */}
+                    {item.image && (
+                      <div className="w-20 h-20 rounded-lg overflow-hidden border">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {/* Details */}
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                        {item.name}
+                      </h3>
+                      {item.weight && (
+                        <p className="text-sm text-gray-500 mb-1">
+                          Weight: {item.weight}
+                        </p>
+                      )}
+                      <p className="text-gray-600">Price: ₹{item.price}</p>
+
+                      {/* Quantity controls */}
+                      <div className="flex items-center mt-2 space-x-2">
+                        <button
+                          onClick={() => dispatch(decQty(item))}
+                          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
+                        >
+                          <FaMinus />
+                        </button>
+                        <span className="px-4 py-1 bg-gray-100 rounded">
+                          {item.qty}
+                        </span>
+                        <button
+                          onClick={() => dispatch(addCart(item))}
+                          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
+                        >
+                          <FaPlus />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
+                  {/* Price + Delete */}
                   <div className="flex flex-col items-end space-y-2">
                     <div className="text-lg font-bold text-gray-800">
                       ₹{(item.price * item.qty).toFixed(2)}

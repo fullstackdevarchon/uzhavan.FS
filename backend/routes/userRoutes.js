@@ -1,4 +1,3 @@
-// routes/user.routes.js
 import express from "express";
 import {
   getUsers,
@@ -7,7 +6,7 @@ import {
   logoutUser,
   adminLogin,
   verifyToken,
-} from "../controller/user.controller.js";
+} from "../controller/user.controller.js"; // ✅ fixed path
 import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
 
 const router = express.Router();
