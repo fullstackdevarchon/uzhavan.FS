@@ -1,61 +1,67 @@
-// src/pages/Profile.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import toast from "react-hot-toast";
-import {
-  FaUser,
-  FaEnvelope,
-  FaMapMarkerAlt,
-  FaPhoneAlt,
-  FaCity,
-  FaGlobe,
-  FaLocationArrow,
-  FaHashtag,
-} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCity, FaGlobe, FaLocationArrow, FaHashtag, FaSave, FaEdit } from "react-icons/fa";
 
 const Profile = () => {
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     fullName: "",
     email: "",
+    phone: "",
     address: {
       street: "",
       city: "",
       district: "",
       state: "",
-      country: "",
-      pincode: "",
-    },
-    phone: "",
+      country: "India",
+      pincode: ""
+    }
   });
-  const [loading, setLoading] = useState(false);
-  const [profile, setProfile] = useState(null);
-
+  
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
-  // Fetch profile
+  // Fetch user profile
   const fetchProfile = async () => {
+    if (!token) {
+      toast.error("Please login to view profile");
+      navigate("/login/buyer");
+      return;
+    }
+
     try {
+      setLoading(true);
       const { data } = await axios.get("http://localhost:5000/api/profile/", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
 
-      setForm({
-        fullName: data.fullName || "",
-        email: data.email || "",
-        address: {
-          street: data.address?.street || "",
-          city: data.address?.city || "",
-          district: data.address?.district || "",
-          state: data.address?.state || "",
-          country: data.address?.country || "",
-          pincode: data.address?.pincode || "",
-        },
-        phone: data.phone || "",
-      });
-
-      setProfile(data);
+      if (data.user) {
+        setFormData({
+          fullName: data.user.fullName || "",
+          email: data.user.email || "",
+          phone: data.user.phone || "",
+          address: {
+            street: data.user.address?.street || "",
+            city: data.user.address?.city || "",
+            district: data.user.address?.district || "",
+            state: data.user.address?.state || "",
+            country: data.user.address?.country || "India",
+            pincode: data.user.address?.pincode || ""
+          }
+        });
+      }
     } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login/buyer");
+      }
       toast.error(err.response?.data?.message || "Failed to load profile");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,252 +69,335 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
-  // Handle nested address change
-  const handleAddressChange = (field, value) => {
-    setForm((prev) => ({
+  // Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
       ...prev,
-      address: {
-        ...prev.address,
-        [field]: value,
-      },
+      [name]: value
     }));
   };
 
-  // Validate phone & pincode
+  // Handle address changes
+  const handleAddressChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      address: {
+        ...prev.address,
+        [name]: value
+      }
+    }));
+  };
+
+  // Validate form
   const validateForm = () => {
-    if (!/^\d{10}$/.test(form.phone)) {
-      toast.error("Phone number must be exactly 10 digits");
+    if (!formData.fullName.trim()) {
+      toast.error("Please enter your full name");
       return false;
     }
-    if (!/^\d{6}$/.test(form.address.pincode)) {
-      toast.error("Pincode must be exactly 6 digits");
+    if (!/^\d{10}$/.test(formData.phone)) {
+      toast.error("Please enter a valid 10-digit phone number");
+      return false;
+    }
+    if (!formData.address.street.trim()) {
+      toast.error("Please enter your street address");
+      return false;
+    }
+    if (!formData.address.city.trim()) {
+      toast.error("Please enter your city");
+      return false;
+    }
+    if (!/^\d{6}$/.test(formData.address.pincode)) {
+      toast.error("Please enter a valid 6-digit pincode");
       return false;
     }
     return true;
   };
 
-  // Handle form submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateForm()) return;
+  // Save profile
+  const saveProfile = async () => {
+    if (!validateForm()) return false;
 
-    setLoading(true);
     try {
-      const { data } = await axios.put(
+      setSaving(true);
+      await axios.put(
         "http://localhost:5000/api/profile/",
-        form,
+        formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       );
-      toast.success(data.message || "Profile updated successfully");
-      fetchProfile(); // Refresh profile data after update
+      toast.success("Profile updated successfully");
+      return true;
     } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/login/buyer");
+      }
+      toast.error(err.response?.data?.message || "Failed to update profile");
+      return false;
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  // Toggle edit mode
+  const toggleEdit = () => {
+    setIsEditing(!isEditing);
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const success = await saveProfile();
+    if (success) {
+      setIsEditing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto mt-10 p-8 bg-gradient-to-r from-blue-50 to-blue-100 border rounded-2xl shadow-lg">
-      <h2 className="text-4xl font-bold mb-10 text-center text-blue-700">
-        My Profile
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* Left: Update Form */}
-        <div>
-          <h3 className="text-2xl font-semibold mb-6 text-blue-600 flex items-center gap-2">
-            <FaUser /> Update Profile
-          </h3>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Street */}
-            <div className="flex items-center gap-3">
-              <FaMapMarkerAlt className="text-blue-500" />
-              <input
-                type="text"
-                placeholder="Street Address"
-                value={form.address.street}
-                onChange={(e) => handleAddressChange("street", e.target.value)}
-                className="w-full p-3 border rounded-lg focus:ring focus:ring-blue-300"
-              />
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-gradient-to-r from-green-600 to-green-800 p-6 text-white">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">My Profile</h1>
+            <button
+              onClick={toggleEdit}
+              className="px-4 py-2 bg-white text-green-700 rounded-md hover:bg-green-50 transition-colors flex items-center gap-2"
+            >
+              {isEditing ? (
+                <>
+                  <FaSave /> Cancel
+                </>
+              ) : (
+                <>
+                  <FaEdit /> Edit Profile
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Full Name */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <FaUser className="text-gray-400" />
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  required
+                />
+              </div>
             </div>
 
-            {/* City */}
-            <div className="flex items-center gap-3">
-              <FaCity className="text-blue-500" />
-              <input
-                type="text"
-                placeholder="City"
-                value={form.address.city}
-                onChange={(e) => handleAddressChange("city", e.target.value)}
-                className="w-full p-3 border rounded-lg focus:ring focus:ring-blue-300"
-              />
-            </div>
-
-            {/* District */}
-            <div className="flex items-center gap-3">
-              <FaLocationArrow className="text-blue-500" />
-              <input
-                type="text"
-                placeholder="District"
-                value={form.address.district}
-                onChange={(e) =>
-                  handleAddressChange("district", e.target.value)
-                }
-                className="w-full p-3 border rounded-lg focus:ring focus:ring-blue-300"
-              />
-            </div>
-
-            {/* State */}
-            <div className="flex items-center gap-3">
-              <FaGlobe className="text-blue-500" />
-              <input
-                type="text"
-                placeholder="State"
-                value={form.address.state}
-                onChange={(e) => handleAddressChange("state", e.target.value)}
-                className="w-full p-3 border rounded-lg focus:ring focus:ring-blue-300"
-              />
-            </div>
-
-            {/* Country */}
-            <div className="flex items-center gap-3">
-              <FaGlobe className="text-blue-500" />
-              <input
-                type="text"
-                placeholder="Country"
-                value={form.address.country}
-                onChange={(e) => handleAddressChange("country", e.target.value)}
-                className="w-full p-3 border rounded-lg focus:ring focus:ring-blue-300"
-              />
-            </div>
-
-            {/* Pincode */}
-            <div className="flex items-center gap-3">
-              <FaHashtag className="text-blue-500" />
-              <input
-                type="text"
-                placeholder="Pincode (6 digits)"
-                value={form.address.pincode}
-                onChange={(e) => handleAddressChange("pincode", e.target.value)}
-                className="w-full p-3 border rounded-lg focus:ring focus:ring-blue-300"
-                maxLength="6"
-              />
+            {/* Email */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <div className="flex items-center gap-3">
+                <FaEnvelope className="text-gray-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={true}
+                  className="w-full p-2 border rounded-md bg-gray-100 text-gray-500"
+                />
+              </div>
             </div>
 
             {/* Phone */}
-            <div className="flex items-center gap-3">
-              <FaPhoneAlt className="text-blue-500" />
-              <input
-                type="text"
-                placeholder="Mobile Number (10 digits)"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full p-3 border rounded-lg focus:ring focus:ring-blue-300"
-                maxLength="10"
-              />
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold shadow-md"
-            >
-              {loading ? "Updating..." : "Update Profile"}
-            </button>
-          </form>
-        </div>
-
-        {/* Right: Display Current Profile */}
-        <div>
-          <h3 className="text-2xl font-semibold mb-6 text-green-600 flex items-center gap-2">
-            <FaEnvelope /> Current Profile
-          </h3>
-          {profile ? (
-            <div className="overflow-hidden rounded-2xl shadow-xl bg-white">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-6">
-                <h4 className="text-2xl font-bold flex items-center gap-3">
-                  <FaUser /> {profile.fullName}
-                </h4>
-                <p className="flex items-center gap-2 mt-1 text-blue-100">
-                  <FaEnvelope /> {profile.email}
-                </p>
-              </div>
-
-              {/* Body */}
-              <div className="p-6 space-y-4 text-gray-700 text-lg">
-                <p className="flex items-center gap-3">
-                  <FaMapMarkerAlt className="text-blue-500" />
-                  <span>
-                    <strong>Street:</strong>{" "}
-                    <span className="font-medium">
-                      {profile.address?.street || "-"}
-                    </span>
-                  </span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <FaCity className="text-blue-500" />
-                  <span>
-                    <strong>City:</strong>{" "}
-                    <span className="font-medium">
-                      {profile.address?.city || "-"}
-                    </span>
-                  </span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <FaLocationArrow className="text-blue-500" />
-                  <span>
-                    <strong>District:</strong>{" "}
-                    <span className="font-medium">
-                      {profile.address?.district || "-"}
-                    </span>
-                  </span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <FaGlobe className="text-blue-500" />
-                  <span>
-                    <strong>State:</strong>{" "}
-                    <span className="font-medium">
-                      {profile.address?.state || "-"}
-                    </span>
-                  </span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <FaGlobe className="text-blue-500" />
-                  <span>
-                    <strong>Country:</strong>{" "}
-                    <span className="font-medium">
-                      {profile.address?.country || "-"}
-                    </span>
-                  </span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <FaHashtag className="text-blue-500" />
-                  <span>
-                    <strong>Pincode:</strong>{" "}
-                    <span className="font-medium">
-                      {profile.address?.pincode || "-"}
-                    </span>
-                  </span>
-                </p>
-                <p className="flex items-center gap-3">
-                  <FaPhoneAlt className="text-blue-500" />
-                  <span>
-                    <strong>Mobile:</strong>{" "}
-                    <span className="font-medium">
-                      {profile.phone || "-"}
-                    </span>
-                  </span>
-                </p>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Phone <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <FaPhone className="text-gray-400" />
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  placeholder="10-digit phone number"
+                  pattern="[0-9]{10}"
+                  required
+                />
               </div>
             </div>
-          ) : (
-            <p className="text-gray-600">Loading current profile...</p>
+
+            {/* Street Address */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Street Address <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <FaMapMarkerAlt className="text-gray-400" />
+                <input
+                  type="text"
+                  name="street"
+                  value={formData.address.street}
+                  onChange={handleAddressChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  placeholder="House/Flat no, Building, Area"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* City */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                City <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <FaCity className="text-gray-400" />
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.address.city}
+                  onChange={handleAddressChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* District */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                District
+              </label>
+              <div className="flex items-center gap-3">
+                <FaLocationArrow className="text-gray-400" />
+                <input
+                  type="text"
+                  name="district"
+                  value={formData.address.district}
+                  onChange={handleAddressChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                />
+              </div>
+            </div>
+
+            {/* State */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                State
+              </label>
+              <div className="flex items-center gap-3">
+                <FaGlobe className="text-gray-400" />
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.address.state}
+                  onChange={handleAddressChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                />
+              </div>
+            </div>
+
+            {/* Country */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Country
+              </label>
+              <div className="flex items-center gap-3">
+                <FaGlobe className="text-gray-400" />
+                <input
+                  type="text"
+                  name="country"
+                  value={formData.address.country}
+                  onChange={handleAddressChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                />
+              </div>
+            </div>
+
+            {/* Pincode */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Pincode <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-3">
+                <FaHashtag className="text-gray-400" />
+                <input
+                  type="text"
+                  name="pincode"
+                  value={formData.address.pincode}
+                  onChange={handleAddressChange}
+                  disabled={!isEditing}
+                  className="w-full p-2 border rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  placeholder="6-digit pincode"
+                  pattern="[0-9]{6}"
+                  maxLength="6"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {isEditing && (
+            <div className="flex justify-end space-x-4 pt-4 border-t">
+              <button
+                type="button"
+                onClick={toggleEdit}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center gap-2"
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <FaSave /> Save Changes
+                  </>
+                )}
+              </button>
+            </div>
           )}
-        </div>
+        </form>
       </div>
     </div>
   );

@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "title": "Catch Red Chilli Powder",
+    "price": 109.95,
+    "description": "Catch Red Chilli Powder is a premium quality powdered spice, a staple in Indian cuisine, known for adding vibrant color, spice, and punch to curries, gravies, and pickles.",
+    "category": "spices",
+    "image": "https://catchfoods.com/wp-content/uploads/2023/07/Catch-Spices-Red-Chilli-Powder.webp",
+    "rating": { "rate": 3.9, "count": 120 },
+    "weight": "200g"
+  },
+  {
+    "id": 2,
+    "title": "Catch Coriander Powder",
+    "price": 22.3,
+    "description": "Catch Coriander Powder is known for its distinct aroma and flavor. It is widely used in Indian curries, chutneys, and masalas to enhance taste.",
+    "category": "spices",
+    "image": "https://m.media-amazon.com/images/I/7154zLsH36L.jpg",
+    "rating": { "rate": 4.1, "count": 259 },
+    "weight": "200g"
+  },
+  {
+    "id": 3,
+    "title": "Catch Turmeric Powder",
+    "price": 35.5,
+    "description": "Catch Turmeric Powder is made from the finest turmeric roots, offering a natural yellow color and earthy flavor. It is essential for curries and has medicinal benefits.",
+    "category": "spices",
+    "image": "https://www.bbassets.com/media/uploads/p/xl/30006777_6-catch-turmeric-powder.jpg",
+    "rating": { "rate": 4.5, "count": 310 },
+    "weight": "200g"
+  },
+  {
+    "id": 4,
+    "title": "Catch Black Pepper Powder",
+    "price": 50,
+    "description": "Catch Black Pepper Powder adds a sharp, spicy flavor to soups, salads, curries, and marinades. It is sourced from the best pepper-growing regions of India.",
+    "category": "spices",
+    "image": "https://rclub.in/cdn/shop/files/Black_Pepper_Powder_3D_Pack_100gm_Front.png?v=1743773206",
+    "rating": { "rate": 4.3, "count": 200 },
+    "weight": "200g"
+  },
+  {
+    "id": 5,
+    "title": "Fresh Apples",
+    "price": 120,
+    "description": "Crisp, sweet, and juicy red apples sourced from Himachal Pradesh orchards. Perfect for snacking, juices, and desserts.",
+    "category": "fruits",
+    "image": "https://freshindiaorganics.com/cdn/shop/products/Apples.jpg?v=1686739530",
+    "rating": { "rate": 4.6, "count": 500 },
+    "weight": "1kg"
+  },
+  {
+    "id": 6,
+    "title": "Bananas",
+    "price": 40,
+    "description": "Naturally ripened bananas full of fiber, vitamins, and energy. Ideal for smoothies, snacks, and daily nutrition.",
+    "category": "fruits",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsgl23VQ1a5UFjTkar62Fcl0Sqi2d3derxrA&s",
+    "rating": { "rate": 4.2, "count": 340 },
+    "weight": "1kg"
+  },
+  {
+    "id": 7,
+    "title": "Fresh Mangoes",
+    "price": 150,
+    "description": "Juicy and aromatic Alphonso mangoes, known as the 'king of fruits', perfect for summer desserts, juices, and smoothies.",
+    "category": "fruits",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbQwrS6BBEsCutkygv4uQ-zGcgj3WQWHMfMA&s",
+    "rating": { "rate": 4.8, "count": 600 },
+    "weight": "1kg"
+  },
+  {
+    "id": 8,
+    "title": "Oranges",
+    "price": 90,
+    "description": "Fresh, juicy oranges packed with Vitamin C. Perfect for juicing or enjoying as a healthy snack.",
+    "category": "fruits",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEk8Mp4h3Ct3-XwO2SEuRx1y3XO-RA44Zyig&s",
+    "rating": { "rate": 4.4, "count": 420 },
+    "weight": "1kg"
+  },
+  {
+    "id": 9,
+    "title": "Fresh Tomatoes",
+    "price": 30,
+    "description": "Ripe, red tomatoes full of flavor, used in curries, sauces, salads, and soups.",
+    "category": "vegetables",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ927VLwpdwVwVOhP9uO6qfalxUkO2BRfP65w&s",
+    "rating": { "rate": 4.5, "count": 300 },
+    "weight": "1kg"
+  },
+  {
+    "id": 10,
+    "title": "Potatoes",
+    "price": 25,
+    "description": "Fresh farm potatoes, versatile and nutritious, perfect for fries, curries, and snacks.",
+    "category": "vegetables",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROJLyBfS8fKMRSo3QOXGV1gjRHZtIR0PyraQ&s",
+    "rating": { "rate": 4.1, "count": 350 },
+    "weight": "1kg"
+  },
+  {
+    "id": 11,
+    "title": "Onions",
+    "price": 35,
+    "description": "Fresh onions with a pungent aroma and taste. A must-have ingredient in curries, salads, and fried dishes.",
+    "category": "vegetables",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEZraUx3lKNHLngu5S8M2E-PINk9Bg8MOOkw&s",
+    "rating": { "rate": 4.3, "count": 280 },
+    "weight": "1kg"
+  },
+  {
+    "id": 12,
+    "title": "Cauliflower",
+    "price": 40,
+    "description": "Fresh cauliflower, perfect for curries, stir-fries, and roasted dishes. A great source of vitamins and fiber.",
+    "category": "vegetables",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhjh64KXKAeqcrf9q-j7Y8YHG094JhoEusAg&s",
+    "rating": { "rate": 4.4, "count": 260 },
+    "weight": "1kg"
+  }
+]

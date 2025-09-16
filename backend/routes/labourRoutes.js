@@ -1,10 +1,30 @@
+// routes/labourRoutes.js
 import express from "express";
-import { addLabour, getLabours, deleteLabour } from "../controllers/labourController.js";
-import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
+import {
+  addLabour,
+  getLabours,
+  deleteLabour,
+  loginLabour,
+} from "../controllers/labourController.js";
+import { isAuthenticated, authorizeRoles } from "../middleware/auth.js"; // ✅ import login
 
 const router = express.Router();
 
-// ✅ Admin-only access for labour management
+/**
+ * ========================
+ * 🔑 Authentication Routes
+ * ========================
+ */
+
+// ✅ Login route (public access)
+router.post("/login", loginLabour); // POST /api/labours/login
+
+/**
+ * ========================
+ * 👷 Labour Management (Admin-only)
+ * ========================
+ */
+
 router.post(
   "/add",
   isAuthenticated,

@@ -29,7 +29,7 @@ const Checkout = () => {
 
   const token = localStorage.getItem("token");
 
-  // Fetch user profile to auto-fill address
+  // ✅ Fetch user profile to auto-fill address
   const fetchProfile = async () => {
     if (!token) return;
     try {
@@ -37,16 +37,19 @@ const Checkout = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setAddress({
-        fullName: data.fullName || "",
-        email: data.email || "",
-        phone: data.phone || "",
-        street: data.address?.street || "",
-        city: data.address?.city || "",
-        state: data.address?.state || "",
-        country: data.address?.country || "India",
-        zip: data.address?.pincode || "",
-      });
+      if (data.success && data.user) {
+        const user = data.user;
+        setAddress({
+          fullName: user.fullName || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          street: user.address?.street || "",
+          city: user.address?.city || "",
+          state: user.address?.state || "",
+          country: user.address?.country || "India",
+          zip: user.address?.pincode || "",
+        });
+      }
     } catch (err) {
       console.error("Profile fetch error:", err);
       toast.error("Could not load user profile");
@@ -58,7 +61,7 @@ const Checkout = () => {
     // eslint-disable-next-line
   }, []);
 
-  // Handle place order
+  // ✅ Handle place order
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
 
@@ -71,7 +74,7 @@ const Checkout = () => {
     try {
       const orderData = {
         products: cart.map((item) => ({
-          product: item.id || item._id, // ✅ support both
+          product: item.id || item._id, // handle both
           qty: item.qty,
           price: item.price,
         })),

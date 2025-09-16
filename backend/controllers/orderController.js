@@ -41,12 +41,28 @@ cron.schedule("*/10 * * * *", async () => {
 // ✅ Create order
 export const createOrder = async (req, res) => {
   try {
-    const { products, address } = req.body;
-    const buyer = req.user?._id;
+    console.log('🔍 Order creation request:', {
+      user: req.user,
+      body: req.body
+    });
 
-    if (!buyer) return res.status(401).json({ success: false, message: "Unauthorized" });
-    if (!products || products.length === 0)
-      return res.status(400).json({ success: false, message: "No products in order" });
+    const { products, address } = req.body;
+    const buyer = req.user?._id || req.user?.id; // Handle both _id and id
+
+    if (!buyer) {
+      console.error('❌ No user ID found in request');
+      return res.status(401).json({ 
+        success: false, 
+        message: "Authentication required. Please log in again." 
+      });
+    }
+
+    if (!products || products.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "No products in order" 
+      });
+    }
 
     let subtotal = 0;
 
