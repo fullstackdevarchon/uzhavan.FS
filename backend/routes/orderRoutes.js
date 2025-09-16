@@ -4,17 +4,19 @@ import {
   createOrder,
   getMyOrders,
   cancelOrder,
+  getAllOrders,
+  getOrderById,
 } from "../controllers/orderController.js";
 
 const router = express.Router();
 
-// Create order (buyer only)
+// Buyer routes
 router.post("/create", isAuthenticated, authorizeRoles(["buyer"]), createOrder);
-
-// Get logged-in buyer orders
 router.get("/", isAuthenticated, authorizeRoles(["buyer"]), getMyOrders);
-
-// Cancel an order
 router.put("/:id/cancel", isAuthenticated, authorizeRoles(["buyer"]), cancelOrder);
+
+// Admin routes
+router.get("/admin/all", isAuthenticated, authorizeRoles(["admin"]), getAllOrders);
+router.get("/admin/:id", isAuthenticated, authorizeRoles(["admin"]), getOrderById);
 
 export default router;

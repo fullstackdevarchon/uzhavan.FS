@@ -1,5 +1,6 @@
 // src/pages/Admin/Orders.jsx
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   FaTruck,
   FaClipboardList,
@@ -12,30 +13,50 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [loading, setLoading] = useState(true);
 
+  // 🔥 Fetch orders from API
   useEffect(() => {
-    // 🔧 Replace with API
-    const mockOrders = [
-      { id: 101, customer: "Rahul Sharma", product: "Apples", status: "Pending" },
-      { id: 102, customer: "Priya Singh", product: "Mangoes", status: "Shipped" },
-      { id: 103, customer: "Neha Gupta", product: "Chilli Powder", status: "Delivered" },
-      { id: 104, customer: "Amit Verma", product: "Tomatoes", status: "Cancelled" },
-    ];
-    setOrders(mockOrders);
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(
+          "http://localhost:5000/api/v1/orders/admin/all",
+          { withCredentials: true } // ✅ if using cookies/JWT
+        );
+        setOrders(res.data.orders || []); // assuming API returns { orders: [...] }
+      } catch (err) {
+        console.error("❌ Error fetching orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
   }, []);
 
   // 🔍 Filtered Orders
   const filteredOrders = orders.filter((order) => {
+    const customerName =
+      order?.address?.fullName?.toLowerCase() || "unknown customer";
+    const productsList = order?.products
+      ?.map((p) => p?.product?.name || "unknown product")
+      .join(", ")
+      .toLowerCase();
+
     const matchesSearch =
-      order.customer.toLowerCase().includes(search.toLowerCase()) ||
-      order.product.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === "All" ? true : order.status === filter;
+      customerName.includes(search.toLowerCase()) ||
+      productsList.includes(search.toLowerCase());
+
+    const matchesFilter =
+      filter === "All" ? true : order.status === filter;
+
     return matchesSearch && matchesFilter;
   });
 
   // 🎨 Status Color Mapping
   const statusClasses = {
     Pending: "bg-yellow-100 text-yellow-800 border-yellow-300",
+    Confirmed: "bg-indigo-100 text-indigo-800 border-indigo-300",
     Shipped: "bg-blue-100 text-blue-800 border-blue-300",
     Delivered: "bg-green-100 text-green-800 border-green-300",
     Cancelled: "bg-red-100 text-red-800 border-red-300",
@@ -75,6 +96,7 @@ const Orders = () => {
           >
             <option value="All">All</option>
             <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed</option>
             <option value="Shipped">Shipped</option>
             <option value="Delivered">Delivered</option>
             <option value="Cancelled">Cancelled</option>
@@ -82,43 +104,62 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Card Grid */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => (
-            <div
-              key={order.id}
-              className={`bg-white rounded-2xl shadow-md border p-6 flex flex-col gap-4 hover:shadow-2xl transition transform hover:-translate-y-1 ${statusClasses[order.status]}`}
-            >
-              {/* Header */}
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold">Order #{order.id}</span>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${statusClasses[order.status]}`}
-                >
-                  {order.status}
-                </span>
-              </div>
+      {/* Orders Grid */}
+      {loading ? (
+        <p className="text-center text-gray-600">Loading orders...</p>
+      ) : (
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {filteredOrders.length > 0 ? (
+            filteredOrders.map((order) => (
+              <div
+                key={order._id}
+                className={`bg-white rounded-2xl shadow-md border p-6 flex flex-col gap-4 hover:shadow-2xl transition transform hover:-translate-y-1`}
+              >
+                {/* Header */}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">
+                    Order #{order._id.slice(-6)} {/* last 6 chars */}
+                  </span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                      statusClasses[order.status] || "bg-gray-200"
+                    }`}
+                  >
+                    {order.status}
+                  </span>
+                </div>
 
-              {/* Customer */}
-              <div className="flex items-center gap-3">
-                <FaUser className="text-green-700 text-lg" />
-                <span className="font-semibold text-base">{order.customer}</span>
-              </div>
+                {/* Customer */}
+                <div className="flex items-center gap-3">
+                  <FaUser className="text-green-700 text-lg" />
+                  <span className="font-semibold text-base">
+                    {order?.address?.fullName || "Unknown Customer"}
+                  </span>
+                </div>
 
-              {/* Product */}
-              <div className="flex items-center gap-3">
-                <FaTruck className="text-blue-700 text-lg" />
-                <span className="text-sm md:text-base">{order.product}</span>
+                {/* Products */}
+                <div className="flex items-center gap-3">
+                  <FaTruck className="text-blue-700 text-lg" />
+                  <span className="text-sm md:text-base">
+                    {order?.products
+                      ?.map((p) => `${p.product?.name} (x${p.qty})`)
+                      .join(", ") || "No products"}
+                  </span>
+                </div>
+
+                {/* Total */}
+                <div className="text-sm font-bold text-gray-800">
+                  Total: ₹{order.total}
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <p className="col-span-full text-center text-gray-500 italic py-10 text-lg">
-            No orders found
-          </p>
-        )}
-      </div>
+            ))
+          ) : (
+            <p className="col-span-full text-center text-gray-500 italic py-10 text-lg">
+              No orders found
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Footer Summary */}
       <div className="mt-8 p-4 bg-white rounded-xl shadow flex justify-between items-center text-sm md:text-base text-gray-700 font-medium">

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   BarChart,
   Bar,
@@ -11,10 +12,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { FaChartPie, FaBoxOpen } from "react-icons/fa"; // ✅ Icons
-
-// ✅ Import product dataset
-import productsData from "../../data/products.json";
+import { FaChartPie, FaBoxOpen } from "react-icons/fa";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A020F0"];
 
@@ -23,28 +21,62 @@ const Analytics = () => {
   const [topProducts, setTopProducts] = useState([]);
 
   useEffect(() => {
-    if (productsData.length > 0) {
-      // Group products by category
-      const categoryMap = {};
-      productsData.forEach((p) => {
-        if (!categoryMap[p.category]) {
-          categoryMap[p.category] = 0;
+    const fetchOrders = async () => {
+      try {
+        const { data } = await axios.get("http://localhost:5000/api/v1/orders/admin/all", {
+          withCredentials: true, // ✅ ensure cookies/JWT are sent
+        });
+
+        if (data.success && data.orders) {
+          // ✅ Only delivered orders
+          const deliveredOrders = data.orders.filter(
+            (o) => o.status === "Delivered"
+          );
+
+          const categoryMap = {};
+          const productMap = {};
+
+          deliveredOrders.forEach((order) => {
+            order.products.forEach((item) => {
+              const p = item.product;
+              if (!p) return;
+
+              // Group by category
+              if (p.category) {
+                if (!categoryMap[p.category]) categoryMap[p.category] = 0;
+                categoryMap[p.category] += item.qty;
+              }
+
+              // Group by product
+              if (!productMap[p._id]) {
+                productMap[p._id] = {
+                  id: p._id,
+                  title: p.name || "Unknown",
+                  sold: 0,
+                };
+              }
+              productMap[p._id].sold += item.qty;
+            });
+          });
+
+          // ✅ Pie chart data
+          const categoryChartData = Object.keys(categoryMap).map((key) => ({
+            name: key,
+            value: categoryMap[key],
+          }));
+          setCategoryData(categoryChartData);
+
+          // ✅ Top 5 products
+          const productArray = Object.values(productMap);
+          const sortedProducts = productArray.sort((a, b) => b.sold - a.sold);
+          setTopProducts(sortedProducts.slice(0, 5));
         }
-        categoryMap[p.category] += p.rating.count;
-      });
+      } catch (err) {
+        console.error("❌ Analytics fetch error:", err);
+      }
+    };
 
-      const categoryChartData = Object.keys(categoryMap).map((key) => ({
-        name: key,
-        value: categoryMap[key],
-      }));
-      setCategoryData(categoryChartData);
-
-      // Top 5 selling products
-      const sorted = [...productsData].sort(
-        (a, b) => b.rating.count - a.rating.count
-      );
-      setTopProducts(sorted.slice(0, 5));
-    }
+    fetchOrders();
   }, []);
 
   return (
@@ -98,7 +130,7 @@ const Analytics = () => {
               <XAxis dataKey="title" hide />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="rating.count" fill="#00C49F" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="sold" fill="#00C49F" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
 
@@ -110,9 +142,7 @@ const Analytics = () => {
                 className="flex justify-between items-center bg-white shadow rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition"
               >
                 <span className="truncate w-2/3">{p.title}</span>
-                <span className="text-green-700 font-bold">
-                  {p.rating.count} sold
-                </span>
+                <span className="text-green-700 font-bold">{p.sold} sold</span>
               </li>
             ))}
           </ul>

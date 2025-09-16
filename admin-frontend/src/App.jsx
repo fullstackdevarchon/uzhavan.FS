@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, createContext } from "react";
 import AdminNavbar from "./pages/Admin/AdminNavbar";
 import Login from "./pages/Auth/Login";
@@ -9,6 +9,8 @@ import Orders from "./pages/Admin/Orders";
 import Analytics from "./pages/Admin/Analytics";
 import Inventory from "./pages/Admin/Inventory";
 import SellerRequests from "./pages/Admin/SellerRequests";
+import AddLabour from "./pages/Admin/AddLabour"; // ✅ new
+import LabourList from "./pages/Admin/LabourList"; // ✅ new
 import { Toaster } from "react-hot-toast";
 
 export const AuthContext = createContext(null);
@@ -59,7 +61,10 @@ const App = () => {
     <AuthContext.Provider value={{ authState, login, logout }}>
       <Toaster position="top-right" />
       <Routes>
+        {/* Default route */}
         <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Login route */}
         <Route
           path="/login"
           element={
@@ -70,6 +75,8 @@ const App = () => {
             )
           }
         />
+
+        {/* Admin Dashboard Routes */}
         <Route
           path="/admin-dashboard/*"
           element={
@@ -87,7 +94,13 @@ const App = () => {
           <Route path="analytics" element={<Analytics />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="seller-requests" element={<SellerRequests />} />
+
+          {/* ✅ Delivery Routes */}
+          <Route path="delivery/add-labour" element={<AddLabour />} />
+          <Route path="delivery/labour-list" element={<LabourList />} />
         </Route>
+
+        {/* 404 Route */}
         <Route
           path="*"
           element={
@@ -109,4 +122,3 @@ const App = () => {
 };
 
 export default App;
- 
