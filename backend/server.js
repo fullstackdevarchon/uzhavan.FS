@@ -25,7 +25,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // Vite frontend
+      "http://localhost:5173", // Vite frontend added
       "http://localhost:5175",
       "http://localhost:5176",
       "http://localhost:5174",
