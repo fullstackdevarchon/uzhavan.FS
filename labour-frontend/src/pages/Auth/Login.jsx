@@ -41,15 +41,22 @@ const Login = () => {
       console.log('📨 Backend response:', data);
 
       if (response.ok && data.success) {
-        // Store the token in local storage
+        // Store the token and user metadata for persistence
         if (data.token) {
           localStorage.setItem('token', data.token);
         }
-        
-        // Pass user data to auth context
-        login(data.user || data.labour);
-        
-        toast.success(`Welcome back, ${(data.user || data.labour)?.fullName || 'User'}!`);
+        const u = data.user || data.labour || {};
+        if (u.id || u._id) {
+          localStorage.setItem('userId', (u.id || u._id));
+        }
+        if (u.role) {
+          localStorage.setItem('role', u.role);
+        }
+
+        // Update auth context (also pass token)
+        login(u, data.token);
+
+        toast.success(`Welcome back, ${u.fullName || 'User'}!`);
         navigate("/labour-dashboard");
       } else {
         // Handle specific error cases

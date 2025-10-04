@@ -11,6 +11,7 @@ import Inventory from "./pages/Admin/Inventory";
 import SellerRequests from "./pages/Admin/SellerRequests";
 import AddLabour from "./pages/Admin/AddLabour"; // ✅ new
 import LabourList from "./pages/Admin/LabourList"; // ✅ new
+import LabourOrders from "./pages/Admin/LabourOrders"; // ✅ new
 import { Toaster } from "react-hot-toast";
 
 export const AuthContext = createContext(null);
@@ -98,6 +99,7 @@ const App = () => {
           {/* ✅ Delivery Routes */}
           <Route path="delivery/add-labour" element={<AddLabour />} />
           <Route path="delivery/labour-list" element={<LabourList />} />
+          <Route path="delivery/labour-orders" element={<LabourOrders />} />
         </Route>
 
         {/* 404 Route */}

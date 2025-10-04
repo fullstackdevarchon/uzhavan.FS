@@ -10,6 +10,7 @@ import productRoutes from "./routes/product.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import labourRoutes from "./routes/labourRoutes.js"; // ✅ NEW Labour routes
 
@@ -43,6 +44,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/labours", labourRoutes); // ✅ Mount labour routes
+app.use("/api/auth", authRoutes); // ✅ Token verification route
 
 // MongoDB connection
 mongoose

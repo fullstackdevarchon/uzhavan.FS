@@ -72,13 +72,32 @@ const Checkout = () => {
 
     setLoading(true);
     try {
+      // Normalize and validate product IDs to MongoDB ObjectId strings
+      const objectIdRegex = /^[a-fA-F0-9]{24}$/;
+      const invalidItems = [];
+      const normalizedProducts = cart.map((item) => {
+        let pid = item?._id || item?.product?._id || item?.productId || item?.id;
+        if (typeof pid === 'number') pid = String(pid);
+        if (pid && typeof pid === 'object' && pid._id) pid = pid._id;
+        const isValid = typeof pid === 'string' && objectIdRegex.test(pid);
+        if (!isValid) invalidItems.push(item.name || item.title || pid || 'Unknown');
+        return {
+          product: pid,
+          qty: Number(item.qty),
+          price: Number(item.price),
+        };
+      });
+
+      if (invalidItems.length > 0) {
+        toast.error(`Some items cannot be ordered (invalid IDs): ${invalidItems.join(', ')}`);
+        setLoading(false);
+        return;
+      }
+
       const orderData = {
-        products: cart.map((item) => ({
-          product: item.id || item._id, // handle both
-          qty: item.qty,
-          price: item.price,
-        })),
-        address,
+        products: normalizedProducts,
+        address, // already in backend's expected shape for this checkout
+        paymentMethod: 'Cash on Delivery',
       };
 
       const { data } = await axios.post(

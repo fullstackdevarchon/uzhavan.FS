@@ -47,6 +47,7 @@ const AdminNavbar = () => {
   const deliveryLinks = [
     { path: "delivery/add-labour", text: "Add Labour", icon: FaUserPlus },
     { path: "delivery/labour-list", text: "Labour List", icon: FaListUl },
+    { path: "delivery/labour-orders", text: "Labour Orders", icon: FaClipboardList },
   ];
 
   // Close dropdown on outside click
