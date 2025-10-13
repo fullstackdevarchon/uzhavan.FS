@@ -59,15 +59,19 @@ const Login = () => {
           return;
         }
 
+        // ✅ Save token inside user object for Dashboard
         const authData = {
           id: user.id,
           fullName: user.fullName,
           email: user.email,
           role: user.role,
+          token: token, // <-- Added token here
         };
 
         // Save in localStorage
         localStorage.setItem("user", JSON.stringify(authData));
+
+        // Optionally, you can still store token separately (backup)
         localStorage.setItem("token", token);
         localStorage.setItem("role", user.role);
 

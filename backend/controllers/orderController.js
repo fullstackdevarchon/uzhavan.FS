@@ -160,19 +160,30 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
+
 export const cancelOrder = async (req, res) => {
   try {
     const orderId = req.params.id;
     const order = await Order.findById(orderId);
 
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+    if (!order)
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+
     if (order.buyer.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: "Not authorized to cancel this order" });
-    }
-    if (order.status === "Delivered") {
-      return res.status(400).json({ success: false, message: "Delivered orders cannot be cancelled" });
+      return res
+        .status(403)
+        .json({ success: false, message: "Not authorized to cancel this order" });
     }
 
+    if (order.status === "Delivered") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Delivered orders cannot be cancelled" });
+    }
+
+    // Update product quantities
     for (let item of order.products) {
       const product = await Product.findById(item.product);
       if (product) {
@@ -182,16 +193,35 @@ export const cancelOrder = async (req, res) => {
       }
     }
 
+    // Update order status, currentStatus, and history
     order.status = "Cancelled";
+    order.currentStatus = {
+      status: "Cancelled",
+      updatedAt: new Date(),
+    };
+    order.statusHistory.push({
+      status: "Cancelled",
+      changedAt: new Date(),
+    });
     order.cancelledAt = new Date();
+
     await order.save();
 
-    return res.json({ success: true, message: "Order cancelled successfully", order });
+    return res.json({
+      success: true,
+      message: "Order cancelled successfully",
+      order,
+    });
   } catch (err) {
     console.error("❌ Cancel Order Error:", err);
-    res.status(500).json({ success: false, message: "Failed to cancel order", error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to cancel order",
+      error: err.message,
+    });
   }
 };
+
 
 //
 // ------------------- Admin Controllers -------------------

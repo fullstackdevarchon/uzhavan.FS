@@ -6,6 +6,7 @@ import {
   FaTimesCircle,
   FaBalanceScale,
   FaBoxes,
+  FaTrash,
 } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -40,6 +41,21 @@ function CheckStatus() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  // Delete pending product
+  const handleDelete = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`http://localhost:5000/api/v1/products/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setOrders((prev) => prev.filter((p) => p._id !== id));
+      toast.success("Product deleted successfully");
+    } catch (error) {
+      console.error("❌ Product delete error:", error);
+      toast.error("Failed to delete product");
+    }
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -84,7 +100,7 @@ function CheckStatus() {
           {orders.map((product) => (
             <div
               key={product._id}
-              className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition"
+              className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition relative"
             >
               {/* Product Image */}
               <img
@@ -125,7 +141,7 @@ function CheckStatus() {
                 <div className="mb-3">{getStatusBadge(product.status)}</div>
 
                 {/* Admin Response */}
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 mb-2">
                   <span className="font-medium text-gray-700">Admin:</span>{" "}
                   {product.rejectionReason
                     ? product.rejectionReason
@@ -133,6 +149,17 @@ function CheckStatus() {
                     ? "Product verified successfully"
                     : "Awaiting admin review"}
                 </p>
+
+                {/* Delete Button for Pending Only */}
+                {(product.status === "pending" ||
+                  product.status === "Pending") && (
+                  <button
+                    onClick={() => handleDelete(product._id)}
+                    className="absolute top-3 right-3 flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full hover:bg-red-600 transition text-sm"
+                  >
+                    <FaTrash /> Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}

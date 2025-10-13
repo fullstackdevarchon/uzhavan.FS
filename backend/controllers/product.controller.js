@@ -301,3 +301,36 @@ export const getBuyerProducts = async (req, res) => {
     res.status(500).json({ success: false, message: "Error fetching buyer products" });
   }
 };
+// controllers/product.controller.js
+
+export const updateProductStock = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const { quantity } = req.body;
+
+    if (quantity === undefined || isNaN(quantity)) {
+      return res.status(400).json({ success: false, message: "Invalid quantity" });
+    }
+
+    // Find product
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    // Check if logged-in seller owns this product
+    if (product.seller.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    // Update quantity
+    product.quantity = Number(quantity);
+    await product.save();
+
+    return res.status(200).json({ success: true, product });
+  } catch (error) {
+    console.error("❌ Update stock error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};

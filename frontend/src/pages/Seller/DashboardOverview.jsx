@@ -7,8 +7,9 @@ const DashboardOverview = () => {
     totalProducts: 0,
     pendingOrders: 0,
     totalSales: 0,
-    revenue: 0
+    revenue: 0,
   });
+
   const [recentProducts, setRecentProducts] = useState([]);
 
   useEffect(() => {
@@ -18,28 +19,39 @@ const DashboardOverview = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("token");
-      
-      // Fetch products for stats
-      const response = await fetch("http://localhost:5000/api/products/seller", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
+
+      const response = await fetch(
+        "http://localhost:5000/api/v1/products/seller",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
-      
+      );
+
       if (response.ok) {
         const data = await response.json();
         const products = data.products || [];
-        
+
+        // Calculate total sold items and revenue
+        let totalSold = 0;
+        let revenue = 0;
+        products.forEach((product) => {
+          totalSold += product.sold || 0;
+          revenue += (product.sold || 0) * (product.price || 0);
+        });
+
         setStats({
           totalProducts: products.length,
-          pendingOrders: 5, // Mock data - replace with actual API
-          totalSales: 150, // Mock data - replace with actual API
-          revenue: 12500 // Mock data - replace with actual API
+          pendingOrders: 5, // Replace with real API if available
+          totalSales: totalSold,
+          revenue: revenue,
         });
-        
-        // Show recent 3 products
+
         setRecentProducts(products.slice(0, 3));
+      } else {
+        console.error("Failed to fetch products:", response.status);
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -47,13 +59,16 @@ const DashboardOverview = () => {
   };
 
   const StatCard = ({ icon, title, value, color, link }) => (
-    <Link to={link} className={`bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow ${color}`}>
+    <Link
+      to={link}
+      className={`bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow ${color}`}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-gray-600 text-sm font-medium">{title}</p>
           <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
         </div>
-        <div className={`text-3xl ${color.replace('border-l-4', 'text')}`}>
+        <div className={`text-3xl ${color.replace("border-l-4", "text")}`}>
           {icon}
         </div>
       </div>
@@ -65,7 +80,9 @@ const DashboardOverview = () => {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6">
         <h1 className="text-3xl font-bold mb-2">Welcome to Your Dashboard! 🌾</h1>
-        <p className="text-orange-100">Manage your products and track your sales performance</p>
+        <p className="text-orange-100">
+          Manage your products and track your sales performance
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -129,11 +146,11 @@ const DashboardOverview = () => {
       </div>
 
       {/* Recent Products */}
-      {recentProducts.length > 0 && (
+      {recentProducts.length > 0 ? (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-800">Recent Products</h2>
-            <Link 
+            <Link
               to="/seller/my-products"
               className="text-blue-500 hover:text-blue-600 font-medium"
             >
@@ -142,11 +159,11 @@ const DashboardOverview = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recentProducts.map((product) => (
-              <div key={product.id} className="border rounded-lg overflow-hidden">
+              <div key={product._id} className="border rounded-lg overflow-hidden">
                 <div className="h-32 bg-gray-200 flex items-center justify-center">
-                  {product.image ? (
+                  {product.image?.url ? (
                     <img
-                      src={product.image}
+                      src={product.image.url}
                       alt={product.name}
                       className="w-full h-full object-cover"
                     />
@@ -157,16 +174,20 @@ const DashboardOverview = () => {
                 <div className="p-3">
                   <h3 className="font-semibold text-gray-800 truncate">{product.name}</h3>
                   <p className="text-green-600 font-bold">₹{product.price}</p>
-                  <p className="text-gray-500 text-sm">{product.category}</p>
+                  <p className="text-gray-500 text-sm">
+                    {product.category
+                      ? typeof product.category === "string"
+                        ? product.category
+                        : product.category.name || "Uncategorized"
+                      : "Uncategorized"}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {/* Empty State for New Sellers */}
-      {recentProducts.length === 0 && (
+      ) : (
+        // Empty State
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="text-gray-400 text-6xl mb-4">📦</div>
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No Products Yet</h3>
