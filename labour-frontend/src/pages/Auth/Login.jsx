@@ -9,18 +9,22 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
+  // Forgot Password states
+  const [showForgot, setShowForgot] = useState(false);
+  const [otpStage, setOtpStage] = useState(false);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Input handler
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // ===== LOGIN HANDLER =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -57,9 +61,82 @@ const Login = () => {
     }
   };
 
+  // ===== FORGOT PASSWORD HANDLERS =====
+  const handleSendOtp = async () => {
+    if (!email) return toast.error("Enter your email");
+
+    setForgotLoading(true);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout safeguard
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/forgot/send-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, role: "labour" }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeout);
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("✅ OTP sent successfully! (Please check your email)");
+        setOtpStage(true);
+      } else {
+        toast.error(data.message || "Failed to send OTP");
+      }
+    } catch (err) {
+      if (err.name === "AbortError") {
+        toast.error("Request timed out. Please try again.");
+      } else {
+        console.error(err);
+        toast.error("Server error while sending OTP");
+      }
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!otp || !newPassword) return toast.error("Enter all fields");
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/forgot/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp, newPassword, role: "labour" }),
+        }
+      );
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Password reset successful!");
+        setShowForgot(false);
+        setOtpStage(false);
+        setEmail("");
+        setOtp("");
+        setNewPassword("");
+      } else {
+        toast.error(data.message || "Invalid OTP or email");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error while resetting password");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // ===== RENDER =====
   return (
     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-gradient-to-br from-blue-50 via-white to-indigo-100">
-      {/* ==== LEFT PANEL (Brand Section) ==== */}
+      {/* Left Panel */}
       <div className="hidden md:flex flex-col justify-center items-center bg-indigo-600 text-white p-10">
         <div className="max-w-md text-center space-y-6">
           <div className="bg-white/20 rounded-full p-4 w-fit mx-auto">
@@ -71,17 +148,10 @@ const Login = () => {
           <p className="text-indigo-100 text-lg">
             Access your daily tasks, updates, and dashboard easily.
           </p>
-          <div className="mt-8">
-            {/* <img
-              src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.svgrepo.com%2Fsvg%2F281419%2Fworker&psig=AOvVaw0zFkSAcZp_ER7BYHU8YcaW&ust=1759904596236000&source=images&cd=vfe&opi=89978449&ved=0CBIQjRxqFwoTCJDD29O5kZADFQAAAAAdAAAAABAE"
-              alt="Labour Dashboard Illustration"
-              className="w-80 mx-auto drop-shadow-xl"
-            /> */}
-          </div>
         </div>
       </div>
 
-      {/* ==== RIGHT PANEL (Login Form) ==== */}
+      {/* Right Panel */}
       <div className="flex flex-col justify-center items-center p-8 sm:p-12">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transition-all duration-300 hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)]">
           <div className="text-center mb-8">
@@ -97,7 +167,6 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
             <div className="relative">
               <FiMail className="absolute left-3 top-3.5 text-gray-400 text-lg" />
               <input
@@ -111,7 +180,6 @@ const Login = () => {
               />
             </div>
 
-            {/* Password */}
             <div className="relative">
               <FiLock className="absolute left-3 top-3.5 text-gray-400 text-lg" />
               <input
@@ -125,7 +193,6 @@ const Login = () => {
               />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -146,20 +213,92 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Footer */}
+          {/* Forgot Password Link */}
           <div className="mt-6 text-center text-sm text-gray-500">
             <p>
               Forgot password?{" "}
               <span
-                onClick={() => navigate("/forgot-password")}
+                onClick={() => setShowForgot(true)}
                 className="text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
               >
-                {/* Reset here */}
+                Reset here
               </span>
             </p>
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgot && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
+              {otpStage ? "Reset Password" : "Forgot Password"}
+            </h3>
+
+            {!otpStage ? (
+              <>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button
+                  onClick={handleSendOtp}
+                  disabled={forgotLoading}
+                  className={`w-full py-2 rounded-lg text-white font-semibold ${
+                    forgotLoading
+                      ? "bg-indigo-400 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
+                >
+                  {forgotLoading ? "Sending OTP..." : "Send OTP"}
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button
+                  onClick={handleResetPassword}
+                  disabled={forgotLoading}
+                  className={`w-full py-2 rounded-lg text-white font-semibold ${
+                    forgotLoading
+                      ? "bg-green-400 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {forgotLoading ? "Resetting..." : "Reset Password"}
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={() => {
+                setShowForgot(false);
+                setOtpStage(false);
+              }}
+              className="mt-3 w-full py-2 text-sm text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

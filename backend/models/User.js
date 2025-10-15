@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto"; // ✅ Added for secure reset token
 
 // Address schema
 const addressSchema = new mongoose.Schema({
@@ -41,6 +42,10 @@ const userSchema = new mongoose.Schema(
     lastLogin: { type: Date, default: null },
     address: { type: addressSchema, default: () => ({}) },
     phone: { type: String, default: "" },
+
+    // 🔹 Added Forgot Password fields
+    resetPasswordToken: { type: String, select: false },
+    resetPasswordExpire: { type: Date, select: false },
   },
   { timestamps: true }
 );
@@ -73,6 +78,24 @@ userSchema.methods.updateLastLogin = async function () {
 // 🔹 Static: find user by email (with password)
 userSchema.statics.findByEmail = function (email) {
   return this.findOne({ email }).select("+pass");
+};
+
+// 🔹 Generate and Hash Password Reset Token
+userSchema.methods.getResetPasswordToken = function () {
+  // Generate a random token
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  // Hash token before saving to DB
+  this.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // Set expiry time (10 minutes)
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+  // Return plain token for sending to user (email or SMS)
+  return resetToken;
 };
 
 export default mongoose.model("User", userSchema);

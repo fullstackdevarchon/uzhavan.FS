@@ -13,6 +13,15 @@ const Login = () => {
     password: "",
   });
 
+  // Forgot Password Modal States
+  const [showForgot, setShowForgot] = useState(false);
+  const [otpStage, setOtpStage] = useState(false);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Handle input change
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -20,6 +29,7 @@ const Login = () => {
     }));
   };
 
+  // ========== LOGIN HANDLER ==========
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -27,9 +37,7 @@ const Login = () => {
     try {
       const response = await fetch("http://localhost:5000/api/users/admin/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           email: formData.email,
@@ -54,21 +62,80 @@ const Login = () => {
     }
   };
 
+  // ========== FORGOT PASSWORD HANDLERS ==========
+
+  // Step 1: Send OTP (Only Admin Email)
+  const handleSendOtp = async () => {
+    if (!email) return toast.error("Enter your admin email");
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/forgot/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("OTP sent to your email");
+        setOtpStage(true);
+      } else {
+        toast.error(data.message || "Invalid admin email");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Step 2: Reset Password
+  const handleResetPassword = async () => {
+    if (!otp || !newPassword) return toast.error("Enter all fields");
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/forgot/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Password reset successful!");
+        setShowForgot(false);
+        setOtpStage(false);
+        setEmail("");
+        setOtp("");
+        setNewPassword("");
+      } else {
+        toast.error(data.message || "Invalid OTP or email");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // ========== RETURN JSX ==========
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-700 relative overflow-hidden">
-      {/* Background Animated Circles */}
+      {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-20 -left-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
         <div className="absolute top-20 -right-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-20 left-40 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Glass Card */}
+      {/* Login Card */}
       <div className="relative z-10 w-full max-w-md backdrop-blur-lg bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-8 sm:p-10">
         <div className="text-center mb-8">
-          <div className="flex justify-center items-center gap-2 mb-3">
-            <FaUserShield className="text-white text-4xl drop-shadow-lg" />
-          </div>
+          <FaUserShield className="text-white text-4xl mx-auto drop-shadow-lg" />
           <h2 className="text-3xl font-bold text-white drop-shadow-md">
             Admin Login
           </h2>
@@ -79,7 +146,6 @@ const Login = () => {
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
           <div className="relative">
             <input
               id="email"
@@ -99,7 +165,6 @@ const Login = () => {
             </label>
           </div>
 
-          {/* Password Field */}
           <div className="relative">
             <input
               id="password"
@@ -120,7 +185,14 @@ const Login = () => {
             <FaLock className="absolute right-3 top-3.5 text-gray-400 text-sm" />
           </div>
 
-          {/* Submit Button */}
+          {/* Forgot Password Link */}
+          <p
+            className="text-right text-sm text-indigo-200 hover:text-white cursor-pointer"
+            onClick={() => setShowForgot(true)}
+          >
+            Forgot Password?
+          </p>
+
           <button
             type="submit"
             disabled={loading}
@@ -145,6 +217,78 @@ const Login = () => {
           © {new Date().getFullYear()} VFAC.COM | All rights reserved
         </p>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgot && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
+              {otpStage ? "Reset Password" : "Forgot Password"}
+            </h3>
+
+            {!otpStage ? (
+              <>
+                <input
+                  type="email"
+                  placeholder="Enter admin email"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button
+                  onClick={handleSendOtp}
+                  disabled={forgotLoading}
+                  className={`w-full py-2 rounded-lg text-white font-semibold ${
+                    forgotLoading
+                      ? "bg-indigo-400 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
+                >
+                  {forgotLoading ? "Sending OTP..." : "Send OTP"}
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button
+                  onClick={handleResetPassword}
+                  disabled={forgotLoading}
+                  className={`w-full py-2 rounded-lg text-white font-semibold ${
+                    forgotLoading
+                      ? "bg-green-400 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {forgotLoading ? "Resetting..." : "Reset Password"}
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={() => {
+                setShowForgot(false);
+                setOtpStage(false);
+              }}
+              className="mt-3 w-full py-2 text-sm text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
