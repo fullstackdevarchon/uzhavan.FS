@@ -1,6 +1,8 @@
-import React from "react";
-import { Routes, Route, Navigate, useParams, Outlet } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import Cookies from "js-cookie";
+import { Toaster } from "react-hot-toast";
+import { io } from "socket.io-client";
 
 // Pages
 import {
@@ -22,7 +24,7 @@ import Checkout from "./pages/BUYER/Checkout";
 import BuyerProduct from "./pages/BUYER/Product";
 import BuyerDashboard from "./pages/BuyerDashboard";
 import BuyerDashboardOverview from "./pages/BUYER/DashboardOverview";
-import Profile from "./pages/BUYER/Profile"; // ✅ Profile page
+import Profile from "./pages/BUYER/Profile";
 
 // Seller
 import SellerDashboard from "./pages/SellerDashboard";
@@ -33,11 +35,33 @@ import SellerDashboardOverview from "./pages/Seller/DashboardOverview";
 
 // Utils
 import ScrollToTop from "./components/ScrollToTop";
-import { Toaster } from "react-hot-toast";
 
-// ------------------------
+// ========================
+// Global Socket.IO Setup
+// ========================
+if (!window.socket) {
+  window.socket = io("http://localhost:5000", {
+    transports: ["websocket"],
+    withCredentials: true,
+  });
+
+  window.socket.on("connect", () => {
+    console.log("🌐 Global socket connected:", window.socket.id);
+  });
+
+  window.socket.on("disconnect", () => {
+    console.log("⚡ Socket disconnected");
+  });
+
+  // Optional: receive notifications anywhere
+  window.socket.on("receiveNotification", (data) => {
+    console.log("📩 Notification received:", data);
+  });
+}
+
+// ========================
 // Role-based Login Route
-// ------------------------
+// ========================
 function LoginWithRole() {
   const { role } = useParams();
   const validRoles = ["buyer", "seller"];
@@ -45,9 +69,9 @@ function LoginWithRole() {
   return <Login />;
 }
 
-// ------------------------
+// ========================
 // Authentication Hook
-// ------------------------
+// ========================
 function useAuth() {
   const token = Cookies.get("token") || localStorage.getItem("token");
   const userRole = Cookies.get("role") || localStorage.getItem("role");
@@ -63,9 +87,9 @@ function useAuth() {
   return { isAuthenticated, user, userRole, token };
 }
 
-// ------------------------
+// ========================
 // Protected Route
-// ------------------------
+// ========================
 function ProtectedRoute({ children, allowedRoles }) {
   const { isAuthenticated, userRole } = useAuth();
 
@@ -85,28 +109,27 @@ function ProtectedRoute({ children, allowedRoles }) {
   return children;
 }
 
-// ------------------------
+// ========================
 // Default redirect
-// ------------------------
+// ========================
 function AuthRedirect() {
   const { isAuthenticated, userRole } = useAuth();
 
-  // Uncomment to auto-redirect logged-in users to dashboard
-  // if (isAuthenticated) {
-  //   return (
-  //     <Navigate
-  //       to={userRole === "seller" ? "/seller/dashboard" : "/buyer-dashboard"}
-  //       replace
-  //     />
-  //   );
-  // }
+  if (isAuthenticated) {
+    return (
+      <Navigate
+        to={userRole === "seller" ? "/seller" : "/buyer-dashboard"}
+        replace
+      />
+    );
+  }
 
   return <Home />;
 }
 
-// ------------------------
+// ========================
 // App Component
-// ------------------------
+// ========================
 function App() {
   return (
     <>
@@ -143,7 +166,7 @@ function App() {
           <Route path="orders" element={<OrderList />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<Checkout />} />
-          <Route path="profile" element={<Profile />} /> {/* ✅ Profile */}
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Seller Dashboard */}
@@ -160,7 +183,7 @@ function App() {
           <Route path="add-product" element={<AddProduct />} />
           <Route path="my-products" element={<MyProducts />} />
           <Route path="check-status" element={<CheckStatus />} />
-          <Route path="profile" element={<Profile />} /> {/* ✅ Profile */}
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Redirect old seller dashboard route */}
@@ -169,6 +192,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+
       <Toaster position="top-right" reverseOrder={false} />
     </>
   );

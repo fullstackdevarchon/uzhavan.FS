@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { FaPlusCircle, FaBoxOpen, FaClipboardCheck, FaChartLine } from "react-icons/fa";
+import { io } from "socket.io-client";
+
+// ✅ Connect to Socket.IO backend
+const socket = io("http://localhost:5000"); // your backend URL
 
 const DashboardOverview = () => {
   const [stats, setStats] = useState({
@@ -12,8 +17,24 @@ const DashboardOverview = () => {
 
   const [recentProducts, setRecentProducts] = useState([]);
 
+  // ✅ Fetch products and setup socket
   useEffect(() => {
+    const sellerId = localStorage.getItem("userId"); // store seller id on login
+    if (sellerId) {
+      socket.emit("joinRoom", { id: sellerId, role: "seller" });
+      console.log("🟢 Joined seller room:", sellerId);
+
+      socket.on("receiveNotification", (data) => {
+        toast.success(`${data.title}: ${data.message}`);
+        console.log("🔔 Notification received:", data);
+      });
+    }
+
     fetchDashboardData();
+
+    return () => {
+      socket.off("receiveNotification");
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -34,7 +55,6 @@ const DashboardOverview = () => {
         const data = await response.json();
         const products = data.products || [];
 
-        // Calculate total sold items and revenue
         let totalSold = 0;
         let revenue = 0;
         products.forEach((product) => {
@@ -44,7 +64,7 @@ const DashboardOverview = () => {
 
         setStats({
           totalProducts: products.length,
-          pendingOrders: 5, // Replace with real API if available
+          pendingOrders: 5, // Replace with API if available
           totalSales: totalSold,
           revenue: revenue,
         });
@@ -52,9 +72,11 @@ const DashboardOverview = () => {
         setRecentProducts(products.slice(0, 3));
       } else {
         console.error("Failed to fetch products:", response.status);
+        toast.error("Failed to load dashboard data");
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      toast.error("Error fetching dashboard data");
     }
   };
 

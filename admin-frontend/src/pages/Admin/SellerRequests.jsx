@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { sendNotification } from "../../socket"; // ✅ Import socket helper
 
 const SellerRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -67,7 +68,7 @@ const SellerRequests = () => {
     ).length;
   };
 
-  // Update product status with limit check
+  // Update product status with limit check and send notification
   const updateStatus = async (id, newStatus, rejectionReason = "") => {
     const product = requests.find((r) => r._id === id);
     const category = categories.find(
@@ -101,6 +102,17 @@ const SellerRequests = () => {
           )
         );
         setRejectOptions((prev) => ({ ...prev, [id]: false }));
+
+        // ✅ Send notification to the seller
+        if (product.seller?._id) {
+          sendNotification({
+            role: product.seller._id, // sending notification to this seller ID
+            title: `Product ${newStatus}`,
+            message: `Your product "${product.name}" has been ${newStatus}${
+              rejectionReason ? `: ${rejectionReason}` : ""
+            }.`,
+          });
+        }
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error updating status");
