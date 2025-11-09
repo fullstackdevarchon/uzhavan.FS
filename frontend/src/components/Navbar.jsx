@@ -1,8 +1,13 @@
-// src/components/Navbar.jsx
 import React, { useState, useEffect, useRef } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { FiShoppingCart, FiLogIn, FiMenu, FiX, FiChevronDown } from "react-icons/fi";
+import {
+  FiShoppingCart,
+  FiLogIn,
+  FiMenu,
+  FiX,
+  FiChevronDown,
+} from "react-icons/fi";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
@@ -10,24 +15,48 @@ const Navbar = () => {
   const cartState = useSelector((state) => state.handleCart);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const loginRef = useRef(null);
 
-  // Simulate cart loading
+  // Separate dropdown states for desktop and mobile to avoid collisions
+  const [isDesktopLoginOpen, setIsDesktopLoginOpen] = useState(false);
+  const [isMobileLoginOpen, setIsMobileLoginOpen] = useState(false);
+
+  // refs for outside click detection
+  const desktopLoginRef = useRef(null);
+  const mobileLoginRef = useRef(null);
+
+  const navigate = useNavigate();
+
+  // simulate cart loading
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
 
-  // Close login dropdown when clicking outside
+  // outside click for desktop login dropdown
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (loginRef.current && !loginRef.current.contains(event.target)) {
-        setIsLoginOpen(false);
+    const handleClickOutsideDesktop = (e) => {
+      if (
+        desktopLoginRef.current &&
+        !desktopLoginRef.current.contains(e.target)
+      ) {
+        setIsDesktopLoginOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutsideDesktop);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutsideDesktop);
+  }, []);
+
+  // outside click for mobile login dropdown
+  useEffect(() => {
+    const handleClickOutsideMobile = (e) => {
+      if (mobileLoginRef.current && !mobileLoginRef.current.contains(e.target)) {
+        setIsMobileLoginOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutsideMobile);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutsideMobile);
   }, []);
 
   const navLinks = [
@@ -39,22 +68,39 @@ const Navbar = () => {
 
   const roles = ["seller", "buyer"];
 
+  // helper used by mobile links to navigate and close menus reliably
+  const handleMobileLoginNavigate = (role) => {
+    setIsMobileLoginOpen(false);
+    setIsOpen(false);
+    // small microtask delay ensures state updates before navigation (rarely needed but safe)
+    setTimeout(() => navigate(`/login/${role}`), 0);
+  };
+
+  // helper for desktop links (close dropdown then navigate)
+  const handleDesktopLoginNavigate = (role) => {
+    setIsDesktopLoginOpen(false);
+    navigate(`/login/${role}`);
+  };
+
   return (
     <nav className="bg-green-500 shadow-2xl fixed top-0 left-0 w-full z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between relative">
-        {/* Logo */}
+        {/* Logo and Name */}
         <NavLink
           to="/"
-          className="flex items-center gap-3 flex-shrink-0 w-64 mx-auto md:mx-0"
+          className="flex items-center gap-3 flex-shrink-0 w-full md:w-auto"
         >
           <img
             src="/assets/logo.png"
             alt="Logo"
             className="h-14 w-14 rounded-full shadow-xl border-2 border-white"
           />
-          <h1 className="text-lg md:text-3xl font-extrabold tracking-wide text-white">
-            υᴢнαναη.ᴄᴏᴍ
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-lg md:text-xl font-extrabold tracking-wide text-white">
+              Terravale Ventures LLP
+            </h1>
+            <div className="w-50 h-[2px] bg-white mt-1 rounded-full"></div>
+          </div>
         </NavLink>
 
         {/* Desktop Nav Links */}
@@ -76,30 +122,31 @@ const Navbar = () => {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-3 mt-3 md:mt-0 relative">
-          {/* Login Dropdown */}
-          <div className="relative" ref={loginRef}>
+          {/* Desktop Login Dropdown */}
+          <div className="relative" ref={desktopLoginRef}>
             <button
-              onClick={() => setIsLoginOpen(!isLoginOpen)}
+              onClick={() => setIsDesktopLoginOpen((s) => !s)}
               className="flex items-center px-5 py-2 border border-white rounded-lg text-white hover:bg-white hover:text-green-800 transition-all duration-300 shadow-md"
+              aria-expanded={isDesktopLoginOpen}
             >
               <FiLogIn className="mr-2" /> Login
               <FiChevronDown
                 className={`ml-2 transform transition-transform ${
-                  isLoginOpen ? "rotate-180" : ""
+                  isDesktopLoginOpen ? "rotate-180" : ""
                 }`}
               />
             </button>
-            {isLoginOpen && (
+
+            {isDesktopLoginOpen && (
               <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-2xl overflow-hidden z-50">
                 {roles.map((role) => (
-                  <NavLink
+                  <button
                     key={role}
-                    to={`/login/${role}`}
-                    className="block px-4 py-3 text-green-800 hover:bg-green-100 font-medium transition"
-                    onClick={() => setIsLoginOpen(false)}
+                    onClick={() => handleDesktopLoginNavigate(role)}
+                    className="w-full text-left px-4 py-3 text-green-800 hover:bg-green-100 font-medium transition"
                   >
                     {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </NavLink>
+                  </button>
                 ))}
               </div>
             )}
@@ -121,8 +168,9 @@ const Navbar = () => {
 
         {/* Mobile Menu Button */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setIsOpen((s) => !s)}
           className="md:hidden absolute right-4 top-4 p-2 text-white rounded-lg hover:bg-green-700 focus:outline-none z-50"
+          aria-expanded={isOpen}
         >
           {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
         </button>
@@ -130,7 +178,7 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="flex flex-col md:hidden text-white font-semibold px-6 pb-4 bg-green-800 w-full shadow-inner transition-all duration-500 ease-in-out space-y-2 mt-16">
+        <div className="flex flex-col md:hidden text-white font-semibold px-6 pb-4 bg-green-800 w-full shadow-inner transition-all duration-300 ease-in-out space-y-2 mt-16 z-40">
           {navLinks.map((link, idx) => (
             <NavLink
               key={idx}
@@ -143,32 +191,31 @@ const Navbar = () => {
           ))}
 
           {/* Mobile Login Dropdown */}
-          <div className="border border-white rounded-lg">
+          <div className="border border-white rounded-lg" ref={mobileLoginRef}>
             <button
-              onClick={() => setIsLoginOpen(!isLoginOpen)}
+              onClick={() => setIsMobileLoginOpen((s) => !s)}
               className="w-full flex items-center justify-center py-3 text-white hover:bg-white hover:text-green-800 transition-all duration-300"
+              aria-expanded={isMobileLoginOpen}
             >
               <FiLogIn className="mr-2" /> Login
               <FiChevronDown
                 className={`ml-2 transform transition-transform ${
-                  isLoginOpen ? "rotate-180" : ""
+                  isMobileLoginOpen ? "rotate-180" : ""
                 }`}
               />
             </button>
-            {isLoginOpen && (
-              <div className="bg-white text-green-800 rounded-b-lg shadow-lg animate-fade-in">
+
+            {isMobileLoginOpen && (
+              // make it visually above other content and clickable
+              <div className="bg-white text-green-800 rounded-b-lg shadow-lg animate-fade-in z-50">
                 {roles.map((role) => (
-                  <NavLink
+                  <button
                     key={role}
-                    to={`/login/${role}`}
-                    className="block px-4 py-2 text-sm hover:bg-green-100"
-                    onClick={() => {
-                      setIsLoginOpen(false);
-                      setIsOpen(false);
-                    }}
+                    onClick={() => handleMobileLoginNavigate(role)}
+                    className="block w-full px-4 py-2 text-sm text-left hover:bg-green-100"
                   >
                     {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </NavLink>
+                  </button>
                 ))}
               </div>
             )}

@@ -141,21 +141,45 @@ const Checkout = () => {
         await saveProfile();
       }
 
-      // Prepare order data
+      // Prepare and validate products with MongoDB ObjectId
+      const objectIdRegex = /^[a-fA-F0-9]{24}$/;
+      const invalidItems = [];
+      const normalizedProducts = cart.map((item) => {
+        let pid = item?._id || item?.product?._id || item?.productId || item?.id;
+        if (typeof pid === 'number') pid = String(pid);
+        if (pid && typeof pid === 'object' && pid._id) pid = pid._id;
+        const isValid = typeof pid === 'string' && objectIdRegex.test(pid);
+        if (!isValid) {
+          invalidItems.push(item.title || pid || 'Unknown');
+        }
+        return {
+          product: pid,
+          qty: Number(item.qty),
+          price: Number(item.price)
+        };
+      });
+
+      if (invalidItems.length > 0) {
+        toast.error(`Some items cannot be ordered (invalid IDs): ${invalidItems.join(', ')}`);
+        setOrderLoading(false);
+        return;
+      }
+
+      // Align payload with backend expectations
       const orderData = {
-        products: cart.map(item => ({
-          product: item.id || item._id,
-          qty: item.qty,
-          price: item.price,
-          name: item.title,
-        })),
-        shippingAddress: formData.address,
+        products: normalizedProducts,
+        address: {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          street: formData.address.street,
+          city: formData.address.city,
+          state: formData.address.state,
+          country: formData.address.country || 'India',
+          zip: formData.address.pincode,
+        },
         paymentMethod: 'Cash on Delivery',
-        totalPrice: total,
-        shippingPrice: shipping,
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
+        total: total,
       };
 
       // Send order request

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { FaUpload, FaBalanceScale, FaBoxes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 
 function AddProduct() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ function AddProduct() {
     price: "",
     weight: "",
     customWeight: "",
-    quantity: 1, // default quantity
+    quantity: 1,
     description: "",
     image: null,
     category: "",
@@ -23,35 +24,30 @@ function AddProduct() {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // ✅ Fetch all enabled categories
+  // ============================
+  // Fetch Categories
+  // ============================
   useEffect(() => {
     const fetchCategories = async () => {
       if (!token) return;
       try {
         const res = await fetch("http://localhost:5000/api/v1/categories/all", {
-          method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
-
         const data = await res.json();
-        console.log("📂 Categories fetch response:", data);
-
         if (data.success) {
-          const enabledCategories = data.categories.filter((c) => c.enabled);
-          setCategories(enabledCategories);
-        } else {
-          toast.error(data.message || "Failed to load categories");
-        }
-      } catch (error) {
-        console.error("❌ Category fetch error:", error);
+          setCategories(data.categories.filter((c) => c.enabled));
+        } else toast.error(data.message || "Failed to load categories");
+      } catch {
         toast.error("Failed to fetch categories");
       }
     };
-
     fetchCategories();
   }, [token]);
 
-  // ✅ Handle input changes
+  // ============================
+  // Handle Form Changes
+  // ============================
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
@@ -64,11 +60,8 @@ function AddProduct() {
       setForm({ ...form, image: file });
       setPreview(URL.createObjectURL(file));
     } else if (name === "quantity") {
-      // prevent negative quantity
-      const qty = parseInt(value);
-      setForm({ ...form, quantity: qty >= 1 ? qty : 1 });
+      setForm({ ...form, quantity: Math.max(1, parseInt(value)) });
     } else if (name === "weight" || name === "customWeight") {
-      // prevent negative weight
       if (value.startsWith("-")) return;
       setForm({ ...form, [name]: value });
     } else {
@@ -76,10 +69,11 @@ function AddProduct() {
     }
   };
 
-  // ✅ Submit product
+  // ============================
+  // Handle Form Submit
+  // ============================
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!user || user.role !== "seller") {
       toast.error("🚫 Only sellers can add products");
       return;
@@ -88,23 +82,14 @@ function AddProduct() {
     setLoading(true);
     try {
       if (!form.category) throw new Error("Please select a category");
-
       const finalWeight = form.weight === "custom" ? form.customWeight : form.weight;
       if (!finalWeight) throw new Error("Please select or enter product weight");
-
       if (!form.image) throw new Error("Please upload a product image");
 
-      // set defaults if empty
-      const finalQuantity = form.quantity && form.quantity > 0 ? form.quantity : 1;
-
       const formData = new FormData();
-      formData.append("name", form.name);
-      formData.append("price", form.price);
-      formData.append("weight", finalWeight);
-      formData.append("quantity", finalQuantity);
-      formData.append("description", form.description);
-      formData.append("category", form.category);
-      formData.append("image", form.image);
+      Object.entries({ ...form, weight: finalWeight }).forEach(([key, value]) =>
+        formData.append(key, value)
+      );
 
       const res = await fetch("http://localhost:5000/api/v1/products/create", {
         method: "POST",
@@ -113,13 +98,23 @@ function AddProduct() {
       });
 
       const data = await res.json();
-      console.log("📡 Backend response:", data);
-
       if (!res.ok) throw new Error(data.message || "Failed to add product");
 
       toast.success("✅ Product submitted for approval!");
 
-      // Reset form
+      // ============================
+      // Send notification to admin
+      // ============================
+      if (window.socket && window.socket.connected) {
+        window.socket.emit("sendNotification", {
+          role: "admin",
+          title: "New Product Request",
+          message: `Seller ${user.fullName} submitted a new product: ${data.product.name}`,
+        });
+        console.log("🔔 Notification emitted to admin");
+      }
+
+      // Reset Form
       setForm({
         name: "",
         price: "",
@@ -133,7 +128,6 @@ function AddProduct() {
       setPreview(null);
       navigate("/seller/my-products");
     } catch (error) {
-      console.error("❌ Add product error:", error);
       toast.error(error.message || "Failed to add product");
     } finally {
       setLoading(false);
@@ -142,21 +136,22 @@ function AddProduct() {
 
   const displayWeight = form.weight === "custom" ? form.customWeight : form.weight;
 
+  // ============================
+  // Render
+  // ============================
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <PageContainer>
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
         ➕ Add New Product
       </h2>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Form */}
         <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name */}
+            {/* Product Name */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Product Name
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Product Name</label>
               <input
                 type="text"
                 name="name"
@@ -169,9 +164,7 @@ function AddProduct() {
 
             {/* Price */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Price (₹)
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Price (₹)</label>
               <input
                 type="number"
                 name="price"
@@ -183,7 +176,7 @@ function AddProduct() {
               />
             </div>
 
-            {/* Weight + Quantity */}
+            {/* Weight & Quantity */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
@@ -209,13 +202,12 @@ function AddProduct() {
                     name="customWeight"
                     value={form.customWeight}
                     onChange={handleChange}
-                    placeholder="Enter custom weight (e.g., 750g, 5kg)"
+                    placeholder="Enter custom weight"
                     className="mt-2 w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 )}
               </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
                   <FaBoxes className="text-gray-500" /> Quantity
@@ -234,9 +226,7 @@ function AddProduct() {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Description
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
               <textarea
                 name="description"
                 value={form.description}
@@ -248,9 +238,7 @@ function AddProduct() {
 
             {/* Category */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Category
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
               <select
                 name="category"
                 value={form.category}
@@ -269,29 +257,20 @@ function AddProduct() {
 
             {/* Image Upload */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Product Image
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Product Image</label>
               <label className="flex items-center justify-center gap-3 cursor-pointer border border-dashed p-4 rounded-lg hover:border-blue-500 hover:bg-blue-50">
                 <FaUpload className="text-gray-500" />
                 <span className="text-gray-600">Upload Product Image</span>
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleChange}
-                  className="hidden"
-                />
+                <input type="file" name="image" accept="image/*" onChange={handleChange} className="hidden" />
               </label>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
               className={`w-full ${
-                loading
-                  ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
+                loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
               } text-white px-4 py-3 rounded-lg font-semibold transition-all`}
             >
               {loading ? "Adding Product..." : "➕ Add Product"}
@@ -302,23 +281,15 @@ function AddProduct() {
         {/* Preview */}
         <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 flex flex-col items-center">
           {preview ? (
-            <img
-              src={preview}
-              alt="Product Preview"
-              className="w-48 h-48 object-cover rounded-xl border mb-4"
-            />
+            <img src={preview} alt="Product Preview" className="w-48 h-48 object-cover rounded-xl border mb-4" />
           ) : (
             <div className="w-48 h-48 flex items-center justify-center border-2 border-dashed rounded-xl text-gray-400">
               No Image
             </div>
           )}
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-bold text-gray-800">
-              {form.name || "Product Name"}
-            </h3>
-            <p className="text-yellow-600 text-lg font-semibold">
-              {form.price ? `₹${form.price}` : "Price"}
-            </p>
+            <h3 className="text-lg font-bold text-gray-800">{form.name || "Product Name"}</h3>
+            <p className="text-yellow-600 text-lg font-semibold">{form.price ? `₹${form.price}` : "Price"}</p>
             <p className="text-gray-600 text-sm">⚖️ {displayWeight || "Weight"}</p>
             <p className="text-gray-600 text-sm">📦 {form.quantity || 1}</p>
             <p className="text-gray-600 text-sm">
@@ -330,7 +301,8 @@ function AddProduct() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
 

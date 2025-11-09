@@ -25,15 +25,12 @@ const AdminNavbar = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("role");
     localStorage.removeItem("token");
-
     document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
     navigate("/login", { replace: true });
     window.location.reload();
   };
 
-  // 🔹 Normal nav links
   const navLinks = [
     { path: "products", icon: FaBoxOpen, text: "Product List" },
     { path: "seller-requests", icon: FaClipboardList, text: "Seller Requests" },
@@ -43,13 +40,12 @@ const AdminNavbar = () => {
     { path: "categories", icon: FaTags, text: "Categories" },
   ];
 
-  // 🔹 Delivery dropdown links
   const deliveryLinks = [
     { path: "delivery/add-labour", text: "Add Labour", icon: FaUserPlus },
     { path: "delivery/labour-list", text: "Labour List", icon: FaListUl },
+    { path: "delivery/labour-orders", text: "Labour Orders", icon: FaClipboardList },
   ];
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -62,27 +58,27 @@ const AdminNavbar = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Top Navbar */}
-      <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-lg px-6 py-3 flex items-center justify-between z-50">
-        {/* Logo */}
+      {/* 🔹 Top Navbar */}
+      <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-lg px-4 sm:px-6 py-3 flex items-center justify-between z-50">
+        {/* 🔹 Logo + Title */}
         <Link to="/admin-dashboard" className="flex items-center gap-3">
           <img
             src="/assets/logo.png"
             alt="Logo"
-            className="h-10 w-10 rounded-full shadow-lg border-2 border-white"
+            className="h-9 w-9 sm:h-10 sm:w-10 rounded-full shadow-lg border-2 border-white"
           />
-          <h1 className="text-lg md:text-xl font-extrabold tracking-wide text-white drop-shadow-md">
+          <h1 className="text-base sm:text-lg md:text-xl font-extrabold tracking-wide text-white drop-shadow-md">
             Admin Dashboard
           </h1>
         </Link>
 
-        {/* Desktop Links */}
-        <div className="hidden md:flex gap-6 text-white font-medium text-sm items-center">
+        {/* 🔹 Desktop / Tablet Links */}
+        <div className="hidden md:flex gap-5 text-white font-medium text-sm items-center">
           {navLinks.map(({ path, icon: Icon, text }) => (
             <Link
               key={path}
               to={`/admin-dashboard/${path}`}
-              className="flex items-center gap-2 relative group px-2 py-1 rounded-md hover:bg-white/10 transition"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-white/10 transition relative group"
             >
               <Icon />
               {text}
@@ -90,23 +86,23 @@ const AdminNavbar = () => {
             </Link>
           ))}
 
-          {/* Delivery Dropdown (Desktop with toggle) */}
+          {/* 🔹 Delivery Dropdown (Desktop) */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDeliveryOpen(!deliveryOpen)}
-              className="flex items-center gap-2 hover:text-gray-200 px-3 py-1 rounded-md hover:bg-white/10 transition"
+              className="flex items-center gap-2 hover:text-gray-200 px-3 py-1.5 rounded-md hover:bg-white/10 transition"
             >
-              <FaTruck /> Delivery
+              <FaTruck />
+              Delivery
               <FaChevronDown
-                className={`text-xs transition-transform ${
+                className={`text-xs transition-transform duration-300 ${
                   deliveryOpen ? "rotate-180" : ""
                 }`}
               />
             </button>
 
-            {/* Dropdown menu */}
             <div
-              className={`absolute right-0 mt-2 w-48 backdrop-blur-md bg-white/90 text-black rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 transform origin-top ${
+              className={`absolute right-0 mt-2 w-48 bg-white/95 text-gray-800 rounded-xl shadow-2xl border border-gray-200 transition-all duration-300 transform origin-top ${
                 deliveryOpen
                   ? "opacity-100 scale-100 translate-y-0"
                   : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
@@ -116,8 +112,8 @@ const AdminNavbar = () => {
                 <Link
                   key={path}
                   to={`/admin-dashboard/${path}`}
-                  className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-indigo-50 transition"
                   onClick={() => setDeliveryOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-indigo-50 transition"
                 >
                   <Icon className="text-indigo-600" /> {text}
                 </Link>
@@ -127,36 +123,36 @@ const AdminNavbar = () => {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-500/80 hover:bg-red-600 px-3 py-1 rounded-md shadow-md transition"
+            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 px-3 py-1.5 rounded-md shadow-md transition"
           >
             <FaSignOutAlt /> Logout
           </button>
         </div>
 
-        {/* Mobile Menu Button */}
+        {/* 🔹 Mobile Menu Button */}
         <button
-          className="md:hidden text-white text-2xl"
+          className="md:hidden text-white text-2xl focus:outline-none"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <FaTimes /> : <FaBars />}
         </button>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* 🔹 Mobile / Tablet Menu */}
       {menuOpen && (
-        <div className="fixed top-[64px] left-0 w-full bg-gradient-to-b from-blue-600 via-indigo-600 to-purple-600 shadow-lg flex flex-col px-6 py-4 gap-3 text-white font-medium text-sm z-40 animate-fadeIn">
+        <div className="fixed top-[60px] left-0 w-full bg-gradient-to-b from-blue-600 via-indigo-600 to-purple-600 shadow-lg flex flex-col px-6 py-4 gap-3 text-white font-medium text-base sm:text-sm z-40 animate-fadeIn">
           {navLinks.map(({ path, icon: Icon, text }) => (
             <Link
               key={path}
               to={`/admin-dashboard/${path}`}
               onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-2 border-b border-white/30 pb-2 hover:text-gray-200"
+              className="flex items-center gap-2 border-b border-white/30 pb-2 hover:text-gray-200 transition"
             >
               <Icon /> {text}
             </Link>
           ))}
 
-          {/* Delivery Dropdown (Mobile toggle) */}
+          {/* 🔹 Delivery Dropdown (Mobile) */}
           <div>
             <button
               onClick={() => setDeliveryOpen(!deliveryOpen)}
@@ -164,13 +160,13 @@ const AdminNavbar = () => {
             >
               <FaTruck /> Delivery
               <FaChevronDown
-                className={`ml-auto transform transition ${
+                className={`ml-auto transform transition-transform duration-300 ${
                   deliveryOpen ? "rotate-180" : ""
                 }`}
               />
             </button>
             <div
-              className={`ml-6 flex flex-col gap-2 mt-2 transition-all duration-300 overflow-hidden border-l border-white/30 pl-3 ${
+              className={`ml-6 flex flex-col gap-2 mt-2 border-l border-white/30 pl-3 transition-all duration-300 overflow-hidden ${
                 deliveryOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
               }`}
             >
@@ -179,7 +175,7 @@ const AdminNavbar = () => {
                   key={path}
                   to={`/admin-dashboard/${path}`}
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 text-sm hover:text-gray-200"
+                  className="flex items-center gap-2 text-sm hover:text-gray-200 transition"
                 >
                   <Icon /> {text}
                 </Link>
@@ -192,15 +188,15 @@ const AdminNavbar = () => {
               setMenuOpen(false);
               handleLogout();
             }}
-            className="flex items-center gap-2 text-red-200 hover:text-red-400"
+            className="flex items-center gap-2 text-red-200 hover:text-red-400 transition"
           >
             <FaSignOutAlt /> Logout
           </button>
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="flex-1 pt-20 px-4 md:px-6 animate-fadeIn">
+      {/* 🔹 Main Page Content */}
+      <main className="flex-1 pt-20 px-4 sm:px-6 md:px-8 lg:px-10 animate-fadeIn">
         <Outlet />
       </main>
     </div>

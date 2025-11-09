@@ -10,6 +10,8 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { sendNotification } from "../../socket"; // ✅ Import socket helper
+import PageContainer from "../../components/PageContainer";
 
 const SellerRequests = () => {
   const [requests, setRequests] = useState([]);
@@ -67,7 +69,7 @@ const SellerRequests = () => {
     ).length;
   };
 
-  // Update product status with limit check
+  // Update product status with limit check and send notification
   const updateStatus = async (id, newStatus, rejectionReason = "") => {
     const product = requests.find((r) => r._id === id);
     const category = categories.find(
@@ -101,6 +103,17 @@ const SellerRequests = () => {
           )
         );
         setRejectOptions((prev) => ({ ...prev, [id]: false }));
+
+        // ✅ Send notification to the seller
+        if (product.seller?._id) {
+          sendNotification({
+            role: product.seller._id, // sending notification to this seller ID
+            title: `Product ${newStatus}`,
+            message: `Your product "${product.name}" has been ${newStatus}${
+              rejectionReason ? `: ${rejectionReason}` : ""
+            }.`,
+          });
+        }
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error updating status");
@@ -140,7 +153,8 @@ const SellerRequests = () => {
   ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto bg-gray-50 min-h-screen">
+    <PageContainer>
+      <div className="p-6 max-w-9x3 mx-auto">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h2 className="text-2xl font-bold text-gray-800">
@@ -324,13 +338,14 @@ const SellerRequests = () => {
           </div>
 
           {filteredRequests.length === 0 && (
-            <p className="text-center text-gray-500 mt-6 text-lg">
+            <p className="text-center text-gray-900 mt-6 text-lg">
               No requests found.
             </p>
           )}
         </>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

@@ -49,9 +49,24 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: ["Pending", "Order Placed", "Confirmed", "Shipped", "Delivered", "Cancelled"],
-      default: "Pending",
+      default: "Order Placed",
+    },
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+    statusHistory: [{
+      status: { type: String, required: true },
+      changedAt: { type: Date, default: Date.now },
+      changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    }],
+    currentStatus: {
+      status: { type: String, default: "Order Placed" },
+      updatedAt: { type: Date, default: Date.now }
     },
     cancelledAt: { type: Date },
+    isAssigned: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

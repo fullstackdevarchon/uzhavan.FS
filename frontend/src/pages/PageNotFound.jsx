@@ -1,13 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Navbar } from "../components";
+import PageContainer from "../components/PageContainer";
 import { ExclamationTriangleIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 const PageNotFound = () => {
   return (
-    <>
-      <Navbar />
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 px-6">
+    <PageContainer>
+      <div className="flex items-center justify-center">
         <div className="text-center">
           {/* Icon */}
           <div className="flex justify-center mb-6">
@@ -35,7 +34,7 @@ const PageNotFound = () => {
           </div>
         </div>
       </div>
-    </>
+    </PageContainer>
   );
 };
 

@@ -1,11 +1,11 @@
 @echo off
 cls
-title Uzhavan.com Backend Server
+title Terravale Ventures LLP  Backend Server
 color 0A
 
 echo.
 echo ==========================================
-echo        UZHAVAN.COM BACKEND SERVER
+echo        Terravale Ventures LLP  BACKEND SERVER
 echo ==========================================
 echo.
 

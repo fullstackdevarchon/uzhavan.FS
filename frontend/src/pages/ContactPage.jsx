@@ -1,13 +1,11 @@
 import React from "react";
-import { Footer, Navbar } from "../components";
+import PageContainer from "../components/PageContainer";
 import { Mail, Phone, MapPin } from "lucide-react"; // icons
 
 const ContactPage = () => {
   return (
-    <>
-      <Navbar />
-      {/* Background with gradient */}
-      <main className="mt-20 relative bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen">
+    <PageContainer>
+      <main>
         <section className="container mx-auto px-6 py-20">
           {/* Heading */}
           <div className="max-w-3xl mx-auto text-center mb-16">
@@ -106,8 +104,7 @@ const ContactPage = () => {
           </div>
         </section>
       </main>
-      <Footer />
-    </>
+    </PageContainer>
   );
 };
 

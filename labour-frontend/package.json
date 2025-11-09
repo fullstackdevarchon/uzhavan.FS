@@ -1,5 +1,5 @@
 {
-  "name": "uzhavan-labour-frontend",
+  "name": "Terravale Ventures LLP -labour-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -26,7 +26,8 @@
     "react-router-dom": "^7.8.2",
     "react-simple-typewriter": "^5.0.1",
     "recharts": "^3.1.2",
-    "redux": "^5.0.1"
+    "redux": "^5.0.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

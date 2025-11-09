@@ -8,6 +8,7 @@ import {
   FaFilter,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
+import PageContainer from "../../components/PageContainer";
 
 const Inventory = () => {
   const [inventory, setInventory] = useState([]);
@@ -90,7 +91,8 @@ const Inventory = () => {
   };
 
   return (
-    <div className="p-4 md:p-10 max-w-7xl mx-auto bg-gray-50 min-h-screen">
+    <PageContainer>
+      <div className="p-4 md:p-10 max-w-7xl mx-auto">
       {/* Page Title */}
       <h2 className="text-xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8 flex items-center gap-3">
         <FaBoxOpen className="text-blue-600 text-lg md:text-2xl" /> Approved
@@ -175,7 +177,8 @@ const Inventory = () => {
           }
         </span>
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

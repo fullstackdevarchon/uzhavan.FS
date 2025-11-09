@@ -1,9 +1,9 @@
 @echo off
-title UZHAVAN.COM Backend Server
+title Terravale Ventures LLP  Backend Server
 color 0A
 echo.
 echo ========================================
-echo       UZHAVAN.COM BACKEND SERVER
+echo       Terravale Ventures LLP  BACKEND SERVER
 echo ========================================
 echo.
 echo [STEP 1/4] Checking for existing processes...

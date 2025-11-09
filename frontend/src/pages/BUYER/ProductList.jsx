@@ -9,6 +9,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 import toast from "react-hot-toast";
 import { FaShoppingCart, FaCreditCard, FaChevronDown } from "react-icons/fa";
+import PageContainer from "../../components/PageContainer";
 
 const ProductList = () => {
   const [data, setData] = useState([]);
@@ -214,10 +215,12 @@ const ProductList = () => {
   );
 
   return (
-    <div className="container mx-auto py-12 px-4 min-h-screen">
+    <PageContainer>
+      <div className="container mx-auto py-12 px-4">
       <h2 className="text-4xl font-bold text-center mb-8">Available Products</h2>
       {loading ? <Loading /> : <ShowProducts />}
     </div>
+    </PageContainer>
   );
 };
 

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Labour from "../models/Labour.js";
 
 // Utility function to generate token
 const generateToken = (user) => {
@@ -44,9 +45,21 @@ export const isAuthenticated = async (req, res, next) => {
     try {
       // Verify the token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select('-password');
 
-      if (!user) {
+      // Look up principal in the correct collection
+      let principal = null;
+      if (decoded.role === 'labour') {
+        principal = await Labour.findById(decoded.id).select('-password');
+      } else {
+        // User model uses 'pass' as password field
+        principal = await User.findById(decoded.id).select('-pass');
+        if (!principal) {
+          // Fallback for any legacy records with 'password'
+          principal = await User.findById(decoded.id).select('-password');
+        }
+      }
+
+      if (!principal) {
         console.error('❌ User not found for token:', { 
           decoded,
           token: token.substring(0, 20) + '...' 
@@ -60,23 +73,24 @@ export const isAuthenticated = async (req, res, next) => {
       // If token is about to expire soon (in next 15 minutes), refresh it
       const now = Math.floor(Date.now() / 1000);
       if (decoded.exp - now < 900) { // 15 minutes in seconds
-        const newToken = generateToken(user);
+        const newToken = generateToken({ _id: principal._id, role: principal.role });
         setTokenCookie(res, newToken);
-        console.log('🔄 Refreshed token for user:', user._id);
+        console.log('🔄 Refreshed token for user:', principal._id);
       }
 
-      // Attach user to request
+      // Attach user to request with normalized fields
       req.user = {
-        _id: user._id,
-        id: user._id, // Add both _id and id for compatibility
-        role: user.role,
-        email: user.email,
-        name: user.name
+        _id: principal._id,
+        id: principal._id,
+        role: principal.role,
+        email: principal.email,
+        fullName: principal.fullName || principal.name || '',
+        name: principal.name || principal.fullName || ''
       };
       
       console.log('🔑 Authenticated user:', { 
-        id: user._id, 
-        role: user.role 
+        id: principal._id, 
+        role: principal.role 
       });
       
       return next();

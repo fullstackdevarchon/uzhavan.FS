@@ -1,9 +1,9 @@
-# Uzhavan.com - Agricultural Services Platform
+# Terravale Ventures LLP  - Agricultural Services Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-Uzhavan.com is a comprehensive agricultural services platform connecting farmers, laborers, and buyers in the agricultural supply chain. Our platform facilitates seamless transactions, labor management, and agricultural product trading.
+Terravale Ventures LLP  is a comprehensive agricultural services platform connecting farmers, laborers, and buyers in the agricultural supply chain. Our platform facilitates seamless transactions, labor management, and agricultural product trading.
 
 ## 🌟 Features
 
@@ -54,8 +54,8 @@ Uzhavan.com is a comprehensive agricultural services platform connecting farmers
 
 1. Clone the repository
    ```bash
-   git clone https://github.com/fullstackdevarchon/uzhavan.FS.git
-   cd uzhavan.com/backend
+   git clone https://github.com/fullstackdevTerravale Ventures LLP /Terravale Ventures LLP .FS.git
+   cd Terravale Ventures LLP /backend
    ```
 
 2. Install dependencies
@@ -125,4 +125,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Thanks to all contributors who have helped shape this project
 - Icons by [Font Awesome](https://fontawesome.com/)
-- Built with ❤️ by the Uzhavan team
+- Built with ❤️ by the Terravale Ventures LLP  team

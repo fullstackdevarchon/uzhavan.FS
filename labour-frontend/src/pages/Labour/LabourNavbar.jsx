@@ -1,12 +1,23 @@
 import { useContext } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../App";
 import toast from "react-hot-toast";
+import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
+import {
+  FaClipboardList,
+  FaCheckCircle,
+  FaSignOutAlt,
+  FaBars,
+  FaTimes,
+  FaUserCircle,
+} from "react-icons/fa";
 
 const LabourNavbar = () => {
   const { authState, logout } = useContext(AuthContext);
-  const location = useLocation();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  
 
   const handleLogout = () => {
     logout();
@@ -16,99 +27,120 @@ const LabourNavbar = () => {
 
   const navItems = [
     {
-      name: "Dashboard",
-      path: "/labour-dashboard",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h2a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5z" />
-        </svg>
-      ),
+      name: "Order List",
+      to: "/labour-dashboard/order-list",
+      icon: <FaClipboardList />,
     },
     {
-      name: "Orders",
-      path: "/labour-dashboard/orders",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      ),
+      name: "My Orders",
+      to: "/labour-dashboard/my-orders",
+      icon: <FaCheckCircle />,
     },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <h1 className="text-xl font-bold text-indigo-600">Uzhavan Labour</h1>
-              </div>
-            </div>
+  const navLinkClass = ({ isActive }) =>
+    `relative px-2 transition-colors duration-300 flex items-center gap-2 ${
+      isActive
+        ? "text-yellow-300 font-semibold after:w-full"
+        : "text-white hover:text-yellow-300 after:w-0"
+    } after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-yellow-300 after:transition-all`;
 
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
-                    {authState.user?.name?.charAt(0) || "L"}
-                  </span>
-                </div>
-                <span className="text-sm font-medium text-gray-700">
+  const iconCircleClass =
+    "p-1 rounded-full bg-white/20 text-white flex items-center justify-center text-base";
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Top Fixed Navbar */}
+      <nav className="bg-green-600 fixed top-0 left-0 w-full shadow-md z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          {/* Logo + Title */}
+          <Link to="/labour-dashboard/order-list" className="flex items-center gap-3 flex-shrink-0">
+            <img
+              src="/assets/logo.png"
+              alt="Logo"
+              className="h-10 w-10 rounded-full shadow-lg border-2 border-white object-cover"
+            />
+            <h1 className="text-xl md:text-2xl font-extrabold text-white">Labour Dashboard</h1>
+          </Link>
+
+          {/* Desktop Nav */}
+          <ul className="hidden md:flex items-center space-x-6 font-medium">
+            {navItems.map((item) => (
+              <li key={item.name}>
+                <NavLink to={item.to} className={navLinkClass} end={false}>
+                  <span className={iconCircleClass}>{item.icon}</span>
+                  {item.name}
+                </NavLink>
+              </li>
+            ))}
+            <li>
+              <div className="flex items-center gap-2">
+                {/* <span className="text-white hidden lg:flex items-center gap-2">
+                  <FaUserCircle className="text-white/90" />
                   {authState.user?.name || "Labour"}
-                </span>
+                </span> */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-red-200 hover:text-red-100 font-semibold transition-colors focus:outline-none"
+                >
+                  <span className={iconCircleClass}>
+                    <FaSignOutAlt />
+                  </span>
+                  Logout
+                </button>
               </div>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Logout
-              </button>
-            </div>
-          </div>
+            </li>
+          </ul>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-white text-2xl focus:outline-none ml-auto"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle navigation"
+          >
+            {isOpen ? <FaTimes /> : <FaBars />}
+          </button>
         </div>
+
+        {/* Mobile Nav */}
+        {isOpen && (
+          <div className="md:hidden bg-green-600 shadow-inner px-6 py-2 rounded-b-2xl divide-y divide-white/30">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.to}
+                onClick={() => setIsOpen(false)}
+                className={({ isActive }) =>
+                  `block py-3 flex items-center gap-2 ${
+                    isActive ? "text-yellow-300 font-semibold" : "text-white hover:text-yellow-200"
+                  }`
+                }
+              >
+                <span className={iconCircleClass}>{item.icon}</span>
+                {item.name}
+              </NavLink>
+            ))}
+
+            <button
+              onClick={() => {
+                handleLogout();
+                setIsOpen(false);
+              }}
+              className="block py-3 w-full text-left flex items-center gap-2 text-red-200 hover:text-red-100 font-semibold transition-colors focus:outline-none"
+            >
+              <span className={iconCircleClass}>
+                <FaSignOutAlt />
+              </span>
+              Logout
+            </button>
+          </div>
+        )}
       </nav>
 
-      {/* Side Navigation */}
-      <div className="flex">
-        <div className="w-64 bg-white shadow-sm min-h-screen">
-          <nav className="mt-8">
-            <div className="px-4">
-              <ul className="space-y-2">
-                {navItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <li key={item.name}>
-                      <Link
-                        to={item.path}
-                        className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                          isActive
-                            ? "bg-indigo-100 text-indigo-700 border-r-2 border-indigo-700"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        }`}
-                      >
-                        <span className={`mr-3 ${isActive ? "text-indigo-500" : "text-gray-400 group-hover:text-gray-500"}`}>
-                          {item.icon}
-                        </span>
-                        {item.name}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </nav>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1">
-          <Outlet />
-        </div>
-      </div>
+      {/* Content Area */}
+      <main className="flex-1 p-6 bg-gray-50 mt-20">
+        <Outlet />
+      </main>
     </div>
   );
 };

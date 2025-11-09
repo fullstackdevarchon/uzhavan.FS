@@ -5,9 +5,14 @@ const categorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      enum: ["Spices", "Vegetables", "Fruits"], // ✅ restricts values
+      enum: ["Spices", "Vegetables", "Fruits"],
       unique: true,
       trim: true,
+    },
+    group: {
+      type: String,
+      required: true,
+      enum: ["spices", "vegetables", "fruits"],
     },
     enabled: {
       type: Boolean,
@@ -20,9 +25,7 @@ const categorySchema = new mongoose.Schema(
       default: 20,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export default mongoose.model("Category", categorySchema);

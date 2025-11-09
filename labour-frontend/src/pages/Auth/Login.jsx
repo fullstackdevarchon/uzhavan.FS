@@ -2,162 +2,303 @@ import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../App";
 import toast from "react-hot-toast";
+import { FiMail, FiLock, FiUser } from "react-icons/fi";
+import { FaSpinner } from "react-icons/fa";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
+  // Forgot Password states
+  const [showForgot, setShowForgot] = useState(false);
+  const [otpStage, setOtpStage] = useState(false);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Input handler
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  // ===== LOGIN HANDLER =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      console.log('🔹 Sending request:', formData);
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/labours/login`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // Include cookies for JWT
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify(formData),
         }
       );
 
       const data = await response.json();
-      console.log('📨 Backend response:', data);
-
       if (response.ok && data.success) {
-        // Store the token in local storage
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
-        
-        // Pass user data to auth context
-        login(data.user || data.labour);
-        
-        toast.success(`Welcome back, ${(data.user || data.labour)?.fullName || 'User'}!`);
+        if (data.token) localStorage.setItem("token", data.token);
+        const u = data.user || data.labour || {};
+        if (u._id || u.id) localStorage.setItem("userId", u._id || u.id);
+        if (u.role) localStorage.setItem("role", u.role);
+
+        login(u, data.token);
+        toast.success(`Welcome back, ${u.fullName || "User"}!`);
         navigate("/labour-dashboard");
       } else {
-        // Handle specific error cases
-        if (data.code === 'TOKEN_EXPIRED') {
-          toast.error('Your session has expired. Please log in again.');
-          // Clear any existing token
-          localStorage.removeItem('token');
-        } else {
-          toast.error(data.message || 'Invalid credentials');
-        }
+        toast.error(data.message || "Invalid credentials");
       }
-    } catch (error) {
-      console.error("❌ Login error:", error);
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Error response data:', error.response.data);
-        console.error('Error status:', error.response.status);
-        console.error('Error headers:', error.response.headers);
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('No response received:', error.request);
-        toast.error("⚠️ No response from server. Please try again later.");
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Error message:', error.message);
-        toast.error(`⚠️ Error: ${error.message}`);
-      }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("⚠️ Unable to connect to server");
     } finally {
       setLoading(false);
     }
   };
 
+  // ===== FORGOT PASSWORD HANDLERS =====
+  const handleSendOtp = async () => {
+    if (!email) return toast.error("Enter your email");
+
+    setForgotLoading(true);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout safeguard
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/forgot/send-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, role: "labour" }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeout);
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("✅ OTP sent successfully! (Please check your email)");
+        setOtpStage(true);
+      } else {
+        toast.error(data.message || "Failed to send OTP");
+      }
+    } catch (err) {
+      if (err.name === "AbortError") {
+        toast.error("Request timed out. Please try again.");
+      } else {
+        console.error(err);
+        toast.error("Server error while sending OTP");
+      }
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!otp || !newPassword) return toast.error("Enter all fields");
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/forgot/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp, newPassword, role: "labour" }),
+        }
+      );
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Password reset successful!");
+        setShowForgot(false);
+        setOtpStage(false);
+        setEmail("");
+        setOtp("");
+        setNewPassword("");
+      } else {
+        toast.error(data.message || "Invalid OTP or email");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error while resetting password");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // ===== RENDER =====
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center">
-            <svg
-              className="h-6 w-6 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
+    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+      {/* Left Panel */}
+      <div className="hidden md:flex flex-col justify-center items-center bg-indigo-600 text-white p-10">
+        <div className="max-w-md text-center space-y-6">
+          <div className="bg-white/20 rounded-full p-4 w-fit mx-auto">
+            <FiUser size={40} />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Labour Login
+          <h2 className="text-4xl font-bold tracking-tight">
+            Welcome Back, Labour!
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Sign in to access your work dashboard
+          <p className="text-indigo-100 text-lg">
+            Access your daily tasks, updates, and dashboard easily.
           </p>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
+      {/* Right Panel */}
+      <div className="flex flex-col justify-center items-center p-8 sm:p-12">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 transition-all duration-300 hover:shadow-[0_8px_25px_rgba(0,0,0,0.1)]">
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <div className="bg-indigo-100 p-3 rounded-full">
+                <FiUser className="text-indigo-600 text-2xl" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">Labour Login</h2>
+            <p className="text-gray-500 text-sm mt-1">
+              Sign in to access your work dashboard
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="relative">
+              <FiMail className="absolute left-3 top-3.5 text-gray-400 text-lg" />
               <input
-                name="email"
                 type="email"
+                name="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
+                className="pl-10 pr-3 py-2 w-full border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md"
               />
             </div>
-            <div>
+
+            <div className="relative">
+              <FiLock className="absolute left-3 top-3.5 text-gray-400 text-lg" />
               <input
-                name="password"
                 type="password"
+                name="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
+                className="pl-10 pr-3 py-2 w-full border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 hover:shadow-md"
               />
             </div>
-          </div>
 
-          <div>
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+              className={`w-full flex justify-center items-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg text-white transition-all duration-300 ${
                 loading
-                  ? "bg-indigo-400"
-                  : "bg-indigo-600 hover:bg-indigo-700"
+                  ? "bg-indigo-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg transform hover:scale-[1.02]"
               } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
             >
               {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                  Signing in...
-                </div>
+                <>
+                  <FaSpinner className="animate-spin" />
+                  Connecting...
+                </>
               ) : (
-                "Sign in"
+                "Sign In"
               )}
             </button>
+          </form>
+
+          {/* Forgot Password Link */}
+          <div className="mt-6 text-center text-sm text-gray-500">
+            <p>
+              Forgot password?{" "}
+              <span
+                onClick={() => setShowForgot(true)}
+                className="text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
+              >
+                Reset here
+              </span>
+            </p>
           </div>
-        </form>
+        </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgot && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
+              {otpStage ? "Reset Password" : "Forgot Password"}
+            </h3>
+
+            {!otpStage ? (
+              <>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <button
+                  onClick={handleSendOtp}
+                  disabled={forgotLoading}
+                  className={`w-full py-2 rounded-lg text-white font-semibold ${
+                    forgotLoading
+                      ? "bg-indigo-400 cursor-not-allowed"
+                      : "bg-indigo-600 hover:bg-indigo-700"
+                  }`}
+                >
+                  {forgotLoading ? "Sending OTP..." : "Send OTP"}
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  className="w-full mb-3 px-4 py-2 border rounded-lg focus:ring focus:ring-indigo-300"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <button
+                  onClick={handleResetPassword}
+                  disabled={forgotLoading}
+                  className={`w-full py-2 rounded-lg text-white font-semibold ${
+                    forgotLoading
+                      ? "bg-green-400 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {forgotLoading ? "Resetting..." : "Reset Password"}
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={() => {
+                setShowForgot(false);
+                setOtpStage(false);
+              }}
+              className="mt-3 w-full py-2 text-sm text-gray-500 hover:text-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCity, FaGlobe, FaLocationArrow, FaHashtag, FaSave, FaEdit } from "react-icons/fa";
+import PageContainer from "../../components/PageContainer";
 
 const Profile = () => {
   const [formData, setFormData] = useState({
@@ -168,7 +169,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <PageContainer>
+      <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
         <div className="bg-gradient-to-r from-green-600 to-green-800 p-6 text-white">
           <div className="flex justify-between items-center">
@@ -399,7 +401,8 @@ const Profile = () => {
           )}
         </form>
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

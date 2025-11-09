@@ -1,6 +1,6 @@
 @echo off
 echo ====================================
-echo    UZHAVAN.COM BACKEND SERVER
+echo    Terravale Ventures LLP  BACKEND SERVER
 echo ====================================
 echo.
 echo [1/3] Killing existing Node.js processes...

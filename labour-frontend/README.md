@@ -1,6 +1,6 @@
-# Uzhavan Labour Frontend
+# Terravale Ventures LLP  Labour Frontend
 
-A React-based frontend application for labour management in the Uzhavan platform. This application allows labour workers to manage their assigned orders and track their work progress.
+A React-based frontend application for labour management in the Terravale Ventures LLP  platform. This application allows labour workers to manage their assigned orders and track their work progress.
 
 ## Features
 

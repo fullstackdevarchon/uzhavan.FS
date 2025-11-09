@@ -1,6 +1,6 @@
 // src/pages/AboutPage.jsx
 import React from 'react';
-import { Footer, Navbar } from "../components";
+import PageContainer from "../components/PageContainer";
 
 const AboutPage = () => {
   const productCategories = [
@@ -22,20 +22,14 @@ const AboutPage = () => {
   ];
 
   return (
-    <>
-      <Navbar />
-      
-      {/* Increased spacing below navbar */}
-      <div className="mt-28 md:mt-40"></div>
-
-      {/* Main Content */}
+    <PageContainer>
       <main className="container mx-auto px-4 py-12">
 
         {/* About Section */}
         <section className="text-center max-w-4xl mx-auto mb-16">
           <h1 className="text-5xl font-bold mb-6">About Us</h1>
           <hr className="border-gray-300 w-24 mx-auto mb-6" />
-          <p className="text-gray-700 text-lg leading-relaxed">
+          <p className="text-black-900 text-lg leading-relaxed">
             Welcome to our store! We provide high-quality fresh produce, organic vegetables, and aromatic spices sourced directly from trusted farmers. 
             Our mission is to bring healthy, fresh, and flavorful ingredients to your kitchen. 
             Every product is carefully selected to ensure the best quality and taste. 
@@ -73,8 +67,7 @@ const AboutPage = () => {
         </section>
 
       </main>
-      <Footer />
-    </>
+    </PageContainer>
   );
 };
 

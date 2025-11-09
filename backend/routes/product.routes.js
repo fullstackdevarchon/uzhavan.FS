@@ -9,8 +9,9 @@ import {
   deleteProduct,
   markAsSold,
   getBuyerProducts,
-  getProductById,        // ✅ Add this import
-  getSimilarProducts,    // Optional: for similar products feature
+  getProductById,
+  updateProductStock,       // ✅ new import
+  getSimilarProducts,
 } from "../controllers/product.controller.js";
 import { isAuthenticated, authorizeRoles } from "../middleware/auth.js";
 import { singleUpload } from "../middleware/multer.js";
@@ -23,7 +24,7 @@ const router = express.Router();
  * =========================
  */
 
-// Seller: Create a product (status = pending)
+// Seller: Create a product
 router.post(
   "/create",
   isAuthenticated,
@@ -40,6 +41,14 @@ router.get(
   getSellerProducts
 );
 
+// Seller: Update stock
+router.put(
+  "/:id",                     // Matches your frontend PUT request
+  isAuthenticated,
+  authorizeRoles(["seller"]),
+  updateProductStock           // ✅ New controller
+);
+
 /**
  * =========================
  * ADMIN ROUTES
@@ -54,7 +63,7 @@ router.get(
   getAllProducts
 );
 
-// Admin: Update product status (approved / rejected / pending)
+// Admin: Update product status
 router.patch(
   "/:id/status",
   isAuthenticated,
@@ -63,16 +72,14 @@ router.patch(
 );
 
 // Admin & Seller: Delete product
-// Admin can delete any product; Seller can delete only their own
 router.delete("/:id", isAuthenticated, deleteProduct);
 
 /**
  * =========================
  * PUBLIC / BUYER ROUTES
- * =========================
  */
 
-// Public: Get products by category (approved, available)
+// Public: Get products by category
 router.get("/category/:category", getProductsByCategory);
 
 // Public: Get all approved & available products (buyer view)
@@ -89,7 +96,7 @@ router.patch(
   markAsSold
 );
 
-// Optional: Similar products by category (excluding current product)
+// Optional: Similar products by category
 router.get("/similar/:categoryId/:productId", getSimilarProducts);
 
 export default router;

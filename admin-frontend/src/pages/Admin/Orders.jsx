@@ -1,13 +1,8 @@
 // src/pages/Admin/Orders.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import {
-  FaTruck,
-  FaClipboardList,
-  FaUser,
-  FaSearch,
-  FaFilter,
-} from "react-icons/fa";
+import { FaTruck, FaClipboardList, FaUser, FaSearch, FaFilter } from "react-icons/fa";
+import PageContainer from "../../components/PageContainer";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -63,117 +58,121 @@ const Orders = () => {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto bg-gray-50 min-h-screen font-sans">
-      {/* Page Title */}
-      <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-8 flex items-center gap-3 tracking-wide">
-        <FaClipboardList className="text-green-600" /> Order Management
-      </h2>
+    <PageContainer>
+      <div className=" p-8">
+        {/* Page Title */}
+        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
+          <FaClipboardList className="text-green-600" /> 
+          Order Management
+        </h2>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-        {/* Search Bar */}
-        <div className="relative w-full md:w-1/3">
-          <FaSearch className="absolute left-3 top-3 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search customer or product..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none text-sm md:text-base"
-          />
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          {/* Search Bar */}
+          <div className="relative w-full md:w-1/3">
+            <FaSearch className="absolute left-3 top-3 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search customer or product..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-300 bg-white/80 backdrop-blur-sm
+                         shadow-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Filter Dropdown */}
+          <div className="flex items-center gap-2">
+            <FaFilter className="text-gray-500" />
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="px-5 py-2 rounded-xl border border-gray-300 bg-white/80 backdrop-blur-sm
+                         shadow-md focus:ring-2 focus:ring-green-500 focus:outline-none"
+            >
+              <option value="All">All Orders</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
 
-        {/* Filter Dropdown */}
-        <div className="flex items-center gap-2">
-          <FaFilter className="text-gray-500" />
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="px-5 py-2 rounded-xl border border-gray-300 bg-white shadow-md 
-                       focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none 
-                       text-sm md:text-base font-medium cursor-pointer transition-all duration-200
-                       hover:shadow-lg hover:border-green-400"
-          >
-            <option value="All">All</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Orders Grid */}
-      {loading ? (
-        <p className="text-center text-gray-600">Loading orders...</p>
-      ) : (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {filteredOrders.length > 0 ? (
-            filteredOrders.map((order) => (
+        {/* Orders Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
+          </div>
+        ) : (
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {filteredOrders.map((order) => (
               <div
                 key={order._id}
-                className={`bg-white rounded-2xl shadow-md border p-6 flex flex-col gap-4 hover:shadow-2xl transition transform hover:-translate-y-1`}
+                className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-t-4 border-green-500 
+                           p-6 hover:shadow-2xl transition transform hover:-translate-y-1"
               >
-                {/* Header */}
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-semibold">
-                    Order #{order._id.slice(-6)} {/* last 6 chars */}
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                      statusClasses[order.status] || "bg-gray-200"
-                    }`}
-                  >
-                    {order.status}
-                  </span>
-                </div>
+                {/* Order Content */}
+                <div className="flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-bold text-gray-700">
+                      Order #{order._id.slice(-6)}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses[order.status]}`}>
+                      {order.status}
+                    </span>
+                  </div>
 
-                {/* Customer */}
-                <div className="flex items-center gap-3">
-                  <FaUser className="text-green-700 text-lg" />
-                  <span className="font-semibold text-base">
-                    {order?.address?.fullName || "Unknown Customer"}
-                  </span>
-                </div>
+                  {/* Customer Info */}
+                  <div className="flex items-center gap-3 bg-gray-50/80 p-3 rounded-lg">
+                    <FaUser className="text-green-600" />
+                    <div>
+                      <p className="font-semibold">{order?.address?.fullName}</p>
+                      <p className="text-sm text-gray-600">{order?.address?.email}</p>
+                    </div>
+                  </div>
 
-                {/* Products */}
-                <div className="flex items-center gap-3">
-                  <FaTruck className="text-blue-700 text-lg" />
-                  <span className="text-sm md:text-base">
-                    {order?.products
-                      ?.map((p) => `${p.product?.name} (x${p.qty})`)
-                      .join(", ") || "No products"}
-                  </span>
-                </div>
+                  {/* Products */}
+                  <div className="bg-gray-50/80 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaTruck className="text-blue-600" />
+                      <span className="font-semibold">Products</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {order?.products?.map((p) => (
+                        <div key={p.product?._id} className="mb-1">
+                          {p.product?.name} (x{p.qty})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-                {/* Total */}
-                <div className="text-sm font-bold text-gray-800">
-                  Total: ₹{order.total}
+                  {/* Total */}
+                  <div className="flex justify-between items-center pt-3 border-t">
+                    <span className="text-gray-600">Total Amount:</span>
+                    <span className="text-lg font-bold text-green-600">₹{order.total}</span>
+                  </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <p className="col-span-full text-center text-gray-500 italic py-10 text-lg">
-              No orders found
-            </p>
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      {/* Footer Summary */}
-      <div className="mt-8 p-4 bg-white rounded-xl shadow flex justify-between items-center text-sm md:text-base text-gray-700 font-medium">
-        <span>Total Orders: {filteredOrders.length}</span>
-        <span className="font-semibold">
-          Pending / Cancelled:{" "}
-          {
-            filteredOrders.filter(
-              (o) => o.status === "Pending" || o.status === "Cancelled"
-            ).length
-          }
-        </span>
+        {/* Footer Summary */}
+        <div className="mt-8 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700 font-medium">Total Orders: {filteredOrders.length}</span>
+            <span className="text-gray-700 font-medium">
+              Pending / Cancelled: {
+                filteredOrders.filter(o => ['Pending', 'Cancelled'].includes(o.status)).length
+              }
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

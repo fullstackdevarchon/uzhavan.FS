@@ -21,7 +21,7 @@ const Footer = () => {
 
         {/* Logo / Brand */}
         <NavLink to="/" className="text-2xl font-bold text-white mb-4 inline-block">
-          υᴢнαναη.ᴄᴏᴍ
+          Terravale Ventures LLP 
         </NavLink>
 
         {/* Nav Links */}
@@ -59,7 +59,7 @@ const Footer = () => {
 
         {/* Copyright */}
         <p className="text-sm text-gray-400 mt-6">
-          © {new Date().getFullYear()} Archon Tech. All rights reserved.
+          © {new Date().getFullYear()} Terravale Ventures LLP . All rights reserved.
         </p>
       </div>
     </footer>

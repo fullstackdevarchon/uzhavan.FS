@@ -9,6 +9,7 @@ import {
   FaChevronDown,
 } from "react-icons/fa";
 import Cookies from "js-cookie";
+import PageContainer from "../../components/PageContainer";
 
 const API_URL = "http://localhost:5000/api/v1/orders";
 
@@ -92,8 +93,9 @@ const formatAddress = (address) => {
 };
 
 const OrderCard = ({ order, onCancel, isExpanded, toggleExpand }) => {
+  const cancelled = order.status === "Cancelled";
   const meta = STATUS_META[order.status] || STATUS_META["Order Placed"];
-  const currentStep = meta.step > 0 ? meta.step : 1;
+  const currentStep = cancelled ? 0 : meta.step;
 
   return (
     <div className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition">
@@ -153,7 +155,7 @@ const OrderCard = ({ order, onCancel, isExpanded, toggleExpand }) => {
             />
           </button>
 
-          {order.status !== "Cancelled" && order.status !== "Delivered" && (
+          {!cancelled && order.status !== "Delivered" && (
             <button
               onClick={() => onCancel(order._id)}
               className="px-3 py-2 text-sm border rounded-lg text-red-600 hover:bg-red-50 transition"
@@ -171,7 +173,7 @@ const OrderCard = ({ order, onCancel, isExpanded, toggleExpand }) => {
             <h4 className="text-lg font-semibold text-gray-800 mb-4">
               Track Order
             </h4>
-            <Stepper currentStep={currentStep} cancelled={meta.step === -1} />
+            <Stepper currentStep={currentStep} cancelled={cancelled} />
           </div>
         </div>
       )}
@@ -246,6 +248,7 @@ const OrderList = () => {
         throw new Error(data.message || "Cancel failed");
       }
 
+      // Update status in UI immediately
       setOrders((prev) =>
         prev.map((o) => (o._id === id ? { ...o, status: "Cancelled" } : o))
       );
@@ -267,7 +270,7 @@ const OrderList = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <PageContainer>
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
           My Orders
@@ -337,7 +340,7 @@ const OrderList = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

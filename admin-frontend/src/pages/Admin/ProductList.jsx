@@ -5,6 +5,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import { FaTrash, FaChevronDown } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import PageContainer from "../../components/PageContainer";
 
 const ProductListAdmin = () => {
   const [data, setData] = useState([]);
@@ -228,12 +229,14 @@ const ProductListAdmin = () => {
   );
 
   return (
-    <section className="container mx-auto py-12 px-6 mt-20 min-h-screen">
-      <h2 className="text-5xl font-extrabold text-center mb-12 text-gray-900">
-        ✅ Approved Product List
-      </h2>
-      {loading ? <Loading /> : <ShowProducts />}
-    </section>
+    <PageContainer>
+      <section>
+        <h2 className="text-5xl font-extrabold text-center mb-12 text-gray-900">
+          ✅ Approved Product List
+        </h2>
+        {loading ? <Loading /> : <ShowProducts />}
+      </section>
+    </PageContainer>
   );
 };
 

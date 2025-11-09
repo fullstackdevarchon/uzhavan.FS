@@ -2,8 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect, createContext } from "react";
 import LabourNavbar from "./pages/Labour/LabourNavbar";
 import Login from "./pages/Auth/Login";
-import LabourDashboard from "./pages/Labour/LabourDashboard";
 import OrderList from "./pages/Labour/OrderList";
+import MyOrders from "./pages/Labour/MyOrders";
 import { Toaster } from "react-hot-toast";
 
 export const AuthContext = createContext(null);
@@ -100,14 +100,14 @@ const App = () => {
           path="/login"
           element={
             authState.isAuthenticated ? (
-              <Navigate to="/labour-dashboard" />
+              <Navigate to="/labour-dashboard/order-list" />
             ) : (
               <Login />
             )
           }
         />
 
-        {/* Labour Dashboard Routes */}
+        {/* Labour Navbar Routes */}
         <Route
           path="/labour-dashboard/*"
           element={
@@ -118,8 +118,10 @@ const App = () => {
             )
           }
         >
-          <Route index element={<LabourDashboard />} />
-          <Route path="orders" element={<OrderList />} />
+          {/* Default under navbar -> Order List */}
+          <Route index element={<Navigate to="order-list" replace />} />
+          <Route path="order-list" element={<OrderList mode="take" />} />
+          <Route path="my-orders" element={<MyOrders />} />
         </Route>
 
         {/* 404 Route */}

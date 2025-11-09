@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Footer, Navbar } from "../components";
+import PageContainer from "../components/PageContainer";
 import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -37,9 +37,8 @@ const Register = () => {
   };
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-100 pt-20 pb-10">
+    <PageContainer>
+      <main className="flex items-center justify-center">
         <div className="w-full max-w-md bg-white/90 backdrop-blur-lg shadow-2xl rounded-2xl p-8 border border-gray-200">
           <h1 className="text-4xl font-extrabold text-center text-gray-900 mb-2">
             Create Account
@@ -131,8 +130,7 @@ const Register = () => {
           </form>
         </div>
       </main>
-      <Footer />
-    </>
+    </PageContainer>
   );
 };
 
