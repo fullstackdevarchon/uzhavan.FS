@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { FaTrash, FaEdit, FaTimes } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import PageContainer from "../../components/PageContainer";
 
 const MyProducts = () => {
   const [products, setProducts] = useState([]);
@@ -90,7 +91,8 @@ const MyProducts = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <PageContainer>
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
         📦 My Products
       </h2>
@@ -210,7 +212,8 @@ const MyProducts = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

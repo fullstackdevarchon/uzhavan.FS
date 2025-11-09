@@ -13,6 +13,7 @@ import {
   Legend,
 } from "recharts";
 import { FaChartPie, FaBoxOpen } from "react-icons/fa";
+import PageContainer from "../../components/PageContainer";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A020F0"];
 
@@ -23,12 +24,15 @@ const Analytics = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const { data } = await axios.get("http://localhost:5000/api/v1/orders/admin/all", {
-          withCredentials: true, // ✅ ensure cookies/JWT are sent
-        });
+        const { data } = await axios.get(
+          "http://localhost:5000/api/v1/orders/admin/all",
+          {
+            withCredentials: true,
+          }
+        );
 
         if (data.success && data.orders) {
-          // ✅ Only delivered orders
+          // ✅ Filter only delivered orders
           const deliveredOrders = data.orders.filter(
             (o) => o.status === "Delivered"
           );
@@ -41,17 +45,17 @@ const Analytics = () => {
               const p = item.product;
               if (!p) return;
 
-              // Group by category
+              // Group sales by category
               if (p.category) {
                 if (!categoryMap[p.category]) categoryMap[p.category] = 0;
                 categoryMap[p.category] += item.qty;
               }
 
-              // Group by product
+              // Group sales by product
               if (!productMap[p._id]) {
                 productMap[p._id] = {
                   id: p._id,
-                  title: p.name || "Unknown",
+                  title: p.name || "Unknown Product",
                   sold: 0,
                 };
               }
@@ -59,16 +63,17 @@ const Analytics = () => {
             });
           });
 
-          // ✅ Pie chart data
+          // ✅ Pie chart data (category-wise)
           const categoryChartData = Object.keys(categoryMap).map((key) => ({
             name: key,
             value: categoryMap[key],
           }));
           setCategoryData(categoryChartData);
 
-          // ✅ Top 5 products
-          const productArray = Object.values(productMap);
-          const sortedProducts = productArray.sort((a, b) => b.sold - a.sold);
+          // ✅ Bar chart data (top 5 products)
+          const sortedProducts = Object.values(productMap).sort(
+            (a, b) => b.sold - a.sold
+          );
           setTopProducts(sortedProducts.slice(0, 5));
         }
       } catch (err) {
@@ -80,75 +85,103 @@ const Analytics = () => {
   }, []);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto bg-gray-50 min-h-screen">
-      {/* Dashboard Header */}
-      <h2 className="text-3xl font-bold mb-10 text-center text-gray-800 tracking-wide drop-shadow-sm">
-        📊 Analytics Dashboard
-      </h2>
+    <PageContainer>
+      <div className="max-w-7xl w-full mx-auto">
+        {/* Header */}
+        <h2 className="text-4xl font-extrabold mb-10 text-center text-indigo-300 tracking-wide drop-shadow-sm">
+          📊 Analytics Dashboard
+        </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* Pie chart for category sales */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-lg border border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
-            <FaChartPie className="text-blue-600 text-xl" />
-            <h3 className="text-xl font-semibold text-gray-800">
-              Sales by Category
-            </h3>
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          {/* Pie Chart: Sales by Category */}
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl shadow-lg border border-gray-200">
+            <div className="flex items-center gap-3 mb-4">
+              <FaChartPie className="text-blue-600 text-2xl" />
+              <h3 className="text-xl font-semibold text-gray-800">
+                Sales by Category
+              </h3>
+            </div>
+
+            {categoryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={110}
+                    fill="#8884d8"
+                    label
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell
+                        key={index}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-center text-gray-500 mt-10">
+                No delivered order data found.
+              </p>
+            )}
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={categoryData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={110}
-                fill="#8884d8"
-                label
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
 
-        {/* Bar chart for top selling products */}
-        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl shadow-lg border border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
-            <FaBoxOpen className="text-green-600 text-xl" />
-            <h3 className="text-xl font-semibold text-gray-800">
-              Top Selling Products
-            </h3>
+          {/* Bar Chart: Top Selling Products */}
+          <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-2xl shadow-lg border border-gray-200">
+            <div className="flex items-center gap-3 mb-4">
+              <FaBoxOpen className="text-green-600 text-2xl" />
+              <h3 className="text-xl font-semibold text-gray-800">
+                Top Selling Products
+              </h3>
+            </div>
+
+            {topProducts.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={topProducts}>
+                    <XAxis dataKey="title" hide />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar
+                      dataKey="sold"
+                      fill="#00C49F"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+
+                {/* Product List */}
+                <ul className="mt-6 space-y-3">
+                  {topProducts.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex justify-between items-center bg-white shadow rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition"
+                    >
+                      <span className="truncate w-2/3">{p.title}</span>
+                      <span className="text-green-700 font-bold">
+                        {p.sold} sold
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="text-center text-gray-500 mt-10">
+                No sales data available.
+              </p>
+            )}
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={topProducts}>
-              <XAxis dataKey="title" hide />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="sold" fill="#00C49F" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-
-          {/* Product list */}
-          <ul className="mt-6 space-y-3">
-            {topProducts.map((p) => (
-              <li
-                key={p.id}
-                className="flex justify-between items-center bg-white shadow rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition"
-              >
-                <span className="truncate w-2/3">{p.title}</span>
-                <span className="text-green-700 font-bold">{p.sold} sold</span>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

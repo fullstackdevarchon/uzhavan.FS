@@ -6,6 +6,7 @@ import { addCart } from "../../redux/action";
 import { FaStar, FaShoppingCart, FaCreditCard } from "react-icons/fa";
 import toast from "react-hot-toast";
 import axios from "axios";
+import PageContainer from "../../components/PageContainer";
 
 const Product = () => {
   const { id } = useParams();
@@ -160,7 +161,8 @@ const Product = () => {
   );
 
   return (
-    <section className="container mx-auto px-4 py-12">
+    <PageContainer>
+      <section className="container mx-auto px-4 py-12">
       {loading ? <Loading /> : <ShowProduct />}
 
       {product && (
@@ -171,7 +173,8 @@ const Product = () => {
           </Marquee>
         </div>
       )}
-    </section>
+      </section>
+    </PageContainer>
   );
 };
 

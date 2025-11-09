@@ -3,6 +3,7 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, XCircle, Loader2, Save, Power, PowerOff } from "lucide-react";
+import PageContainer from "../../components/PageContainer";
 
 const SelectedProducts = () => {
   const [categories, setCategories] = useState([]);
@@ -119,7 +120,8 @@ const SelectedProducts = () => {
      ✅ UI
   ===================================================== */
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-gray-100 p-6">
+    <PageContainer>
+      <div className="p-6">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -250,7 +252,8 @@ const SelectedProducts = () => {
           </AnimatePresence>
         )}
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

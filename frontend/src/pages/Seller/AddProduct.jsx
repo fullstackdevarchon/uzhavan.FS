@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { FaUpload, FaBalanceScale, FaBoxes } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import PageContainer from "../../components/PageContainer";
 
 function AddProduct() {
   const navigate = useNavigate();
@@ -139,7 +140,8 @@ function AddProduct() {
   // Render
   // ============================
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <PageContainer>
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
         ➕ Add New Product
       </h2>
@@ -299,7 +301,8 @@ function AddProduct() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
 

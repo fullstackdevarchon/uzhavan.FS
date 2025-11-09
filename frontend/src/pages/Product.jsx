@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import productsData from "../data/products.json";
 
 // ✅ Import Navbar & Footer
-import { Navbar, Footer } from "../components";
+import PageContainer from "../components/PageContainer";
 
 const Product = () => {
   const { id } = useParams();
@@ -187,8 +187,7 @@ const Product = () => {
   );
 
   return (
-    <>
-      <Navbar />
+    <PageContainer>
       <section className="container mx-auto px-4 py-12">
         {loading ? <Loading /> : <ShowProduct />}
         <div className="mt-16">
@@ -198,8 +197,7 @@ const Product = () => {
           </Marquee>
         </div>
       </section>
-      <Footer />
-    </>
+    </PageContainer>
   );
 };
 

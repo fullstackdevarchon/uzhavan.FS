@@ -8,6 +8,7 @@ import {
   FaClock,
 } from "react-icons/fa";
 import axios from "axios";
+import PageContainer from "../../components/PageContainer";
 
 const LabourList = () => {
   const [labours, setLabours] = useState([]);
@@ -48,7 +49,8 @@ const LabourList = () => {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto mt-10 px-4">
+    <PageContainer>
+      <div className="max-w-7xl mx-auto mt-10 px-4">
       <h2 className="text-3xl font-bold text-center mb-8 text-indigo-700">
         Labour List
       </h2>
@@ -96,7 +98,8 @@ const LabourList = () => {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

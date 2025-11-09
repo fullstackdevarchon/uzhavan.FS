@@ -1,6 +1,7 @@
 // src/pages/Admin/AssignTask.jsx
 import React, { useState, useEffect } from "react";
 import { socket } from "../../socket";
+import PageContainer from "../../components/PageContainer";
 
 const AssignTask = () => {
   const [notifications, setNotifications] = useState([]);
@@ -44,7 +45,8 @@ const AssignTask = () => {
   };
 
   return (
-    <div className="p-6">
+    <PageContainer>
+      <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Assign Task</h1>
       <button
         onClick={handleAssign}
@@ -65,7 +67,8 @@ const AssignTask = () => {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

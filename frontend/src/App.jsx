@@ -35,6 +35,7 @@ import SellerDashboardOverview from "./pages/Seller/DashboardOverview";
 
 // Utils
 import ScrollToTop from "./components/ScrollToTop";
+import BaseLayout from "./layouts/BaseLayout";
 
 // ========================
 // Global Socket.IO Setup
@@ -139,17 +140,18 @@ function App() {
         <Route path="/" element={<AuthRedirect />} />
 
         {/* Public Pages */}
-        <Route path="/home" element={<Home />} />
-        <Route path="/product" element={<Products />} />
-        <Route path="/product/:id" element={<Product />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/cart" element={<Cart />} />
-
-        {/* Auth Routes */}
-        <Route path="/login" element={<Navigate to="/login/buyer" replace />} />
-        <Route path="/login/:role" element={<LoginWithRole />} />
-        <Route path="/register" element={<Navigate to="/login/buyer" replace />} />
+        <Route element={<BaseLayout />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/product" element={<Products />} />
+          <Route path="/product/:id" element={<Product />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/cart" element={<Cart />} />
+          {/* Auth Routes */}
+          <Route path="/login" element={<Navigate to="/login/buyer" replace />} />
+          <Route path="/login/:role" element={<LoginWithRole />} />
+          <Route path="/register" element={<Navigate to="/login/buyer" replace />} />
+        </Route>
 
         {/* Buyer Dashboard */}
         <Route

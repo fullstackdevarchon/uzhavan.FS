@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { FaShoppingCart, FaBoxOpen, FaClipboardList, FaChartLine, FaBan } from "react-icons/fa";
 import axios from "axios";
+import PageContainer from "../../components/PageContainer";
 
 const DashboardOverview = () => {
   const [stats, setStats] = useState({
@@ -89,7 +90,8 @@ const DashboardOverview = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
+      <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg p-6">
         <h1 className="text-3xl font-bold mb-2">Welcome to Dashboard! 🛒</h1>
@@ -228,7 +230,8 @@ const DashboardOverview = () => {
           </Link>
         </div>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

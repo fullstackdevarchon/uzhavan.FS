@@ -1,4 +1,3 @@
-// src/pages/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -14,6 +13,7 @@ import {
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import PageContainer from "../../components/PageContainer";
 
 // ======== Connect Socket.IO once ========
 let socket;
@@ -51,7 +51,6 @@ const AdminDashboard = () => {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("Token missing");
 
-        // Fetch products
         const productRes = await fetch("http://localhost:5000/api/v1/products/all", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -66,7 +65,6 @@ const AdminDashboard = () => {
           0
         );
 
-        // Fetch orders
         const ordersRes = await fetch("http://localhost:5000/api/v1/orders/admin/all", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -74,7 +72,6 @@ const AdminDashboard = () => {
         const deliveredOrders =
           ordersData.orders?.filter((o) => o.currentStatus?.status === "Delivered").length || 0;
 
-        // Fetch users
         const usersRes = await fetch("http://localhost:5000/api/users/", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -114,7 +111,6 @@ const AdminDashboard = () => {
       console.log("🟢 Admin joined room");
     }
 
-    // Listen for notifications
     socket.on("receiveNotification", (data) => {
       console.log("📨 Notification received:", data);
       setNotifications((prev) => [data, ...prev]);
@@ -212,17 +208,25 @@ const AdminDashboard = () => {
   // Main Dashboard UI
   // ============================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+    <PageContainer>
+      <div className="p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Admin Dashboard</h1>
-            <p className="text-gray-500 mt-2">
-              Welcome back, <span className="font-medium text-indigo-600">Admin</span> 👋
+            <h1 className="text-4xl font-bold text-black tracking-tight drop-shadow-lg">
+              Admin Dashboard
+            </h1>
+            <p className="text-gray-200 mt-2">
+              Welcome back,{" "}
+              <span className="font-medium text-yellow-800">Admin</span> 👋
             </p>
           </div>
-          <div className="mt-4 md:mt-0 text-sm text-gray-500">
-            Last updated: <span className="font-medium text-gray-700">{new Date().toLocaleString()}</span>
+          <div className="mt-4 md:mt-0 text-sm text-gray-200">
+            Last updated:{" "}
+            <span className="font-medium text-white">
+              {new Date().toLocaleString()}
+            </span>
           </div>
         </div>
 
@@ -232,16 +236,22 @@ const AdminDashboard = () => {
             <Link
               key={index}
               to={card.link}
-              className="group relative bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-transparent"
+              className="group relative bg-white/90 p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-transparent backdrop-blur-sm"
             >
               <div
                 className={`absolute inset-0 bg-gradient-to-r ${card.color} opacity-0 group-hover:opacity-100 rounded-2xl transition duration-300`}
               ></div>
               <div className="relative flex items-start justify-between z-10">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800 group-hover:text-white">{card.title}</h2>
-                  <p className="mt-2 text-3xl font-bold text-gray-900 group-hover:text-white">{card.count}</p>
-                  <p className="mt-2 text-sm text-gray-500 group-hover:text-gray-100">{card.description}</p>
+                  <h2 className="text-lg font-semibold text-gray-800 group-hover:text-white">
+                    {card.title}
+                  </h2>
+                  <p className="mt-2 text-3xl font-bold text-gray-900 group-hover:text-white">
+                    {card.count}
+                  </p>
+                  <p className="mt-2 text-sm text-gray-600 group-hover:text-gray-100">
+                    {card.description}
+                  </p>
                 </div>
                 <div className="p-3 bg-gray-100 rounded-xl group-hover:bg-white/20">
                   <card.icon className="text-3xl text-gray-600 group-hover:text-white transition-all duration-300" />
@@ -251,11 +261,13 @@ const AdminDashboard = () => {
           ))}
         </div>
 
-        {/* Notifications List */}
-        <div className="mt-10">
-          <h2 className="text-2xl font-semibold mb-4">Recent Notifications</h2>
+        {/* Notifications Section
+        <div className="mt-10 bg-white/85 p-6 rounded-2xl shadow-lg backdrop-blur-sm">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900">
+            Recent Notifications
+          </h2>
           {notifications.length === 0 ? (
-            <p className="text-gray-500">No notifications yet.</p>
+            <p className="text-gray-700">No notifications yet.</p>
           ) : (
             <ul className="space-y-2">
               {notifications.map((n, index) => (
@@ -268,9 +280,10 @@ const AdminDashboard = () => {
               ))}
             </ul>
           )}
-        </div>
+        </div> */}
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

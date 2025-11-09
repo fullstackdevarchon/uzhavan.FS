@@ -9,6 +9,7 @@ import {
   FaChevronDown,
 } from "react-icons/fa";
 import Cookies from "js-cookie";
+import PageContainer from "../../components/PageContainer";
 
 const API_URL = "http://localhost:5000/api/v1/orders";
 
@@ -269,7 +270,7 @@ const OrderList = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <PageContainer>
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
           My Orders
@@ -339,7 +340,7 @@ const OrderList = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

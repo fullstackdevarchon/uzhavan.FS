@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Footer, Navbar } from "../components";
+import PageContainer from "../components/PageContainer";
 import { useSelector, useDispatch } from "react-redux";
 import { addCart, delCart } from "../redux/action";
 import { Link } from "react-router-dom";
@@ -135,8 +135,7 @@ const Cart = () => {
   };
 
   return (
-    <>
-      <Navbar />
+    <PageContainer>
       <div className="container my-3 py-3">
         <h1 className="text-center text-4xl font-bold text-gray-900 mb-6">
           Cart
@@ -154,8 +153,7 @@ const Cart = () => {
           <EmptyCart />
         )}
       </div>
-      <Footer />
-    </>
+    </PageContainer>
   );
 };
 

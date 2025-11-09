@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { FaPlusCircle, FaBoxOpen, FaClipboardCheck, FaChartLine } from "react-icons/fa";
 import { io } from "socket.io-client";
+import PageContainer from "../../components/PageContainer";
 
 // ✅ Connect to Socket.IO backend
 const socket = io("http://localhost:5000"); // your backend URL
@@ -98,7 +99,8 @@ const DashboardOverview = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
+      <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6">
         <h1 className="text-3xl font-bold mb-2">Welcome to Your Dashboard! 🌾</h1>
@@ -223,7 +225,8 @@ const DashboardOverview = () => {
           </Link>
         </div>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

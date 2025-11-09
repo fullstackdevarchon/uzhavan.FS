@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 // ✅ Import Navbar & Footer
-import { Navbar, Footer } from "../components";
+import PageContainer from "../components/PageContainer";
 
 const Checkout = () => {
   const state = useSelector((state) => state.handleCart);
@@ -232,10 +232,7 @@ const Checkout = () => {
   };
 
   return (
-    <>
-      {/* ✅ Navbar at top */}
-      <Navbar />
-
+    <PageContainer>
       <div className="container my-3 py-3">
         <h1 className="text-center text-4xl font-bold text-gray-900 mb-6">
           Checkout
@@ -252,10 +249,7 @@ const Checkout = () => {
           <EmptyCart />
         )}
       </div>
-
-      {/* ✅ Footer at bottom */}
-      <Footer />
-    </>
+    </PageContainer>
   );
 };
 

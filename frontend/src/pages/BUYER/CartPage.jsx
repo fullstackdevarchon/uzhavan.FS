@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { FaPlus, FaMinus, FaTrash } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { addCart, delCart, decQty } from "../../redux/action";
+import PageContainer from "../../components/PageContainer";
 
 const CartPage = () => {
   const cartItems = useSelector((state) => state.handleCart); // reducer name: handleCart
@@ -14,7 +15,7 @@ const CartPage = () => {
   const total = subtotal + shipping;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <PageContainer>
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
           My Cart
@@ -132,7 +133,7 @@ const CartPage = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

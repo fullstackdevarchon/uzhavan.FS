@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
+import PageContainer from "../../components/PageContainer";
 
 function CheckStatus() {
   const [orders, setOrders] = useState([]);
@@ -86,7 +87,8 @@ function CheckStatus() {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+    <PageContainer>
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
         📊 Product Approval Status
       </h2>
@@ -165,7 +167,8 @@ function CheckStatus() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 }
 

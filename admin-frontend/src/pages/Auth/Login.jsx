@@ -214,7 +214,7 @@ const Login = () => {
         </form>
 
         <p className="text-xs text-center text-gray-200 mt-6">
-          © {new Date().getFullYear()} VFAC.COM | All rights reserved
+          © {new Date().getFullYear()} Terravale Ventures LLP  | All rights reserved
         </p>
       </div>
 

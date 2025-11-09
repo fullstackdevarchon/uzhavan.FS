@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { delCart } from "../../redux/action";
+import PageContainer from "../../components/PageContainer";
 
 const Checkout = () => {
   const cart = useSelector((state) => state.handleCart);
@@ -130,7 +131,7 @@ const Checkout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
+    <PageContainer>
       <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
           Checkout
@@ -289,7 +290,7 @@ const Checkout = () => {
           </form>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

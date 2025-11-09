@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { Footer, Navbar } from "../components";
+import PageContainer from "../components/PageContainer";
 
 const Login = () => {
   const { role } = useParams();
@@ -141,9 +141,8 @@ const Login = () => {
   };
 
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 pt-20 pb-10">
+    <PageContainer>
+      <main className="flex items-center justify-center">
         <div className="w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8 border border-gray-200">
           {/* 🔹 Dynamic Heading */}
           <h1 className="text-4xl font-extrabold text-center text-green-800 mb-2">
@@ -324,8 +323,7 @@ const Login = () => {
           )}
         </div>
       </main>
-      <Footer />
-    </>
+    </PageContainer>
   );
 };
 

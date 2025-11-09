@@ -11,6 +11,7 @@ import {
   FaHourglassHalf,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
+import PageContainer from "../../components/PageContainer";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -186,7 +187,8 @@ const LabourOrders = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <PageContainer>
+      <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-2">
@@ -348,8 +350,9 @@ const LabourOrders = () => {
             No orders match your filters.
           </div>
         )}
-      </div>
-    </div>
+        </div>
+        </div>
+    </PageContainer>
   );
 };
 
