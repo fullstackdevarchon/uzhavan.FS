@@ -9,7 +9,6 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FaShoppingCart, FaCreditCard, FaChevronDown } from "react-icons/fa";
 
-// ✅ Import local JSON file directly (with weight included)
 import productsData from "../data/products.json";
 
 const ProductList = () => {
@@ -27,7 +26,7 @@ const ProductList = () => {
     toast.success("Added to cart!");
   };
 
-  // Load products from local JSON
+  // Load products
   useEffect(() => {
     setLoading(true);
     setTimeout(() => {
@@ -37,10 +36,10 @@ const ProductList = () => {
     }, 500);
   }, []);
 
-  // Close dropdown on outside click
+  // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
       }
     };
@@ -64,11 +63,11 @@ const ProductList = () => {
 
   // Skeleton loader
   const Loading = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 animate-pulse">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
       {Array.from({ length: 8 }).map((_, index) => (
         <div
           key={index}
-          className="border rounded-lg p-6 shadow-lg bg-white min-h-[400px]"
+          className="border rounded-xl p-6 shadow-lg bg-white/40 backdrop-blur-xl min-h-[400px]"
         >
           <Skeleton height={220} />
           <Skeleton className="mt-4" count={3} />
@@ -80,25 +79,29 @@ const ProductList = () => {
   // Render products
   const ShowProducts = () => (
     <>
-      {/* Dropdown filter */}
-      <div className="flex justify-start mb-6" ref={dropdownRef}>
-        <div className="relative w-52">
+      {/* Dropdown Filter */}
+      <div className="flex justify-start mb-8" ref={dropdownRef}>
+        <div className="relative w-60">
           <button
             onClick={() => setDropdownOpen((prev) => !prev)}
-            className="w-full bg-white border border-gray-300 rounded-lg shadow-sm pl-4 pr-10 py-2 text-left text-gray-700 font-medium hover:border-gray-800 flex justify-between items-center"
+            className="w-full bg-white/20 backdrop-blur-xl border border-white/40 
+            rounded-lg shadow-md pl-4 pr-10 py-3 text-left text-white font-semibold 
+            flex justify-between items-center hover:bg-white/30 transition-all"
           >
             {category === "All"
               ? "All Categories"
               : category.charAt(0).toUpperCase() + category.slice(1)}
-            <FaChevronDown className="ml-2 text-gray-500" />
+            <FaChevronDown className="ml-2 text-white" />
           </button>
+
           {dropdownOpen && (
-            <div className="absolute mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-auto">
+            <div className="absolute mt-1 w-full bg-white/80 backdrop-blur-xl
+            border border-gray-300 rounded-lg shadow-lg z-10 max-h-64 overflow-auto">
               {["All", "spices", "fruits", "vegetables"].map((catOption) => (
                 <div
                   key={catOption}
                   onClick={() => filterProduct(catOption)}
-                  className="cursor-pointer px-4 py-2 hover:bg-gray-100 transition"
+                  className="cursor-pointer px-4 py-3 hover:bg-gray-200 transition text-gray-800 font-medium"
                 >
                   {catOption === "All"
                     ? "All Categories"
@@ -110,56 +113,56 @@ const ProductList = () => {
         </div>
       </div>
 
-      {/* Product grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
         {filter.map((product) => (
           <div
             key={product.id}
-            className="bg-white rounded-xl shadow-md hover:shadow-2xl transition overflow-hidden relative flex flex-col h-full group"
+            className="rounded-2xl shadow-xl bg-white/20 backdrop-blur-xl 
+            hover:shadow-3xl hover:-translate-y-2 transition-all border border-white/40 
+            overflow-hidden relative group"
           >
-            {/* Hover icons */}
-            <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Hover Buttons */}
+            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 
+            group-hover:opacity-100 transition-opacity duration-300 z-20">
               <Link
-                to={`/product/${product.id}`} // ✅ fixed link
-                className="p-2 bg-gray-800 text-white rounded-full hover:bg-gray-900 shadow-lg flex items-center justify-center"
+                to={`/product/${product.id}`}
+                className="p-3 bg-black/70 hover:bg-black text-white rounded-full shadow-md"
               >
                 <FaCreditCard />
               </Link>
+
               <button
                 onClick={() => addProduct(product)}
-                className="p-2 bg-white border border-gray-800 text-gray-800 rounded-full hover:bg-gray-800 hover:text-white shadow-lg flex items-center justify-center"
+                className="p-3 bg-white/70 text-black border border-black 
+                hover:bg-black hover:text-white rounded-full shadow-md transition"
               >
                 <FaShoppingCart />
               </button>
             </div>
 
-            {/* Product image - ✅ square equal size */}
-            <div className="flex justify-center items-center bg-gray-50 h-64 p-4">
-              <div className="w-48 h-48 flex items-center justify-center overflow-hidden rounded-md">
-                <img
-                  src={product.image}
-                  alt={product.title}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
+            {/* ✅ UPDATED IMAGE → SAME SIZE FOR ALL, NO HOVER ZOOM */}
+            <div className="w-full h-60 bg-gray-200/20 overflow-hidden">
+              <img
+                src={product.image}
+                alt={product.title}
+                className="w-full h-full object-cover"
+              />
             </div>
 
-            {/* Product info */}
-            <div className="p-4 flex-1 flex flex-col justify-between">
-              <div>
-                <h2 className="text-lg font-semibold mb-2 line-clamp-2">
-                  {product.title}
-                </h2>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {product.description}
-                </p>
-              </div>
-              <div className="mt-auto flex justify-between items-center">
-                {/* ✅ Price and weight together */}
-                <p className="text-lg font-bold">
+            {/* Product Info */}
+            <div className="p-5 text-white">
+              <h2 className="text-lg font-bold mb-2 line-clamp-2">
+                {product.title}
+              </h2>
+              <p className="text-sm text-gray-100 mb-4 line-clamp-3">
+                {product.description}
+              </p>
+
+              <div className="flex justify-between items-center">
+                <p className="text-xl font-bold text-[#1b3c2b]">
                   ₹ {product.price}{" "}
-                  <span className="text-sm font-medium text-gray-500">
+                  <span className="text-xl font-bold text-[ #1b3c2b]">
                     ({product.weight})
                   </span>
                 </p>
@@ -172,8 +175,10 @@ const ProductList = () => {
   );
 
   return (
-    <section className="container mx-auto py-12 px-4 mt-20 min-h-screen">
-      <h2 className="text-4xl font-bold text-center mb-8">Latest Products</h2>
+    <section className="container mx-auto py-16 px-4 mt-20 min-h-screen">
+      <h2 className="text-4xl font-extrabold text-center mb-10 text-white tracking-wide drop-shadow-lg">
+        Latest Products
+      </h2>
       {loading ? <Loading /> : <ShowProducts />}
     </section>
   );

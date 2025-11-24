@@ -51,7 +51,7 @@ const LabourNavbar = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Top Fixed Navbar */}
-      <nav className="bg-green-600 fixed top-0 left-0 w-full shadow-md z-50">
+      <nav className="bg-indigo-800 fixed top-0 left-0 w-full shadow-md z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo + Title */}
           <Link to="/labour-dashboard/order-list" className="flex items-center gap-3 flex-shrink-0">

@@ -1,3 +1,12 @@
+body {
+  background: url("/assets/IMG-20251006-WA0016(1) (1).jpg") no-repeat center center fixed;
+  background-size: cover;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
+}
 #root {
   max-width: 1280px;
   margin: 0 auto;

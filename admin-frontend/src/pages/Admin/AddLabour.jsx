@@ -48,6 +48,10 @@ const AddLabour = () => {
       setLoading(false);
     }
   };
+  //   if (loading) {
+  //   return <Preloader />; // ✅ Replaced old loading spinner
+  // }
+
 
   return (
     <PageContainer>

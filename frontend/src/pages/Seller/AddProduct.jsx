@@ -8,6 +8,7 @@ import PageContainer from "../../components/PageContainer";
 function AddProduct() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
   const [form, setForm] = useState({
     name: "",
     price: "",
@@ -18,15 +19,14 @@ function AddProduct() {
     image: null,
     category: "",
   });
+
   const [preview, setPreview] = useState(null);
   const [categories, setCategories] = useState([]);
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // ============================
-  // Fetch Categories
-  // ============================
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       if (!token) return;
@@ -45,50 +45,49 @@ function AddProduct() {
     fetchCategories();
   }, [token]);
 
-  // ============================
-  // Handle Form Changes
-  // ============================
+  // Handle input
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image" && files?.length > 0) {
       const file = files[0];
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
+        toast.error("Image size must be < 5MB");
         return;
       }
       setForm({ ...form, image: file });
       setPreview(URL.createObjectURL(file));
-    } else if (name === "quantity") {
-      setForm({ ...form, quantity: Math.max(1, parseInt(value)) });
-    } else if (name === "weight" || name === "customWeight") {
-      if (value.startsWith("-")) return;
-      setForm({ ...form, [name]: value });
-    } else {
-      setForm({ ...form, [name]: value });
+      return;
     }
+
+    if (name === "quantity") {
+      setForm({ ...form, quantity: Math.max(1, parseInt(value)) });
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
   };
 
-  // ============================
-  // Handle Form Submit
-  // ============================
+  // Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!user || user.role !== "seller") {
-      toast.error("🚫 Only sellers can add products");
+      toast.error("Only sellers can add products");
       return;
     }
 
     setLoading(true);
+
     try {
       if (!form.category) throw new Error("Please select a category");
       const finalWeight = form.weight === "custom" ? form.customWeight : form.weight;
-      if (!finalWeight) throw new Error("Please select or enter product weight");
-      if (!form.image) throw new Error("Please upload a product image");
+      if (!finalWeight) throw new Error("Please select or enter weight");
+      if (!form.image) throw new Error("Please upload product image");
 
       const formData = new FormData();
-      Object.entries({ ...form, weight: finalWeight }).forEach(([key, value]) =>
-        formData.append(key, value)
+      Object.entries({ ...form, weight: finalWeight }).forEach(([k, v]) =>
+        formData.append(k, v)
       );
 
       const res = await fetch("http://localhost:5000/api/v1/products/create", {
@@ -98,37 +97,13 @@ function AddProduct() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to add product");
+      if (!res.ok) throw new Error(data.message);
 
-      toast.success("✅ Product submitted for approval!");
+      toast.success("Product submitted!");
 
-      // ============================
-      // Send notification to admin
-      // ============================
-      if (window.socket && window.socket.connected) {
-        window.socket.emit("sendNotification", {
-          role: "admin",
-          title: "New Product Request",
-          message: `Seller ${user.fullName} submitted a new product: ${data.product.name}`,
-        });
-        console.log("🔔 Notification emitted to admin");
-      }
-
-      // Reset Form
-      setForm({
-        name: "",
-        price: "",
-        weight: "",
-        customWeight: "",
-        quantity: 1,
-        description: "",
-        image: null,
-        category: "",
-      });
-      setPreview(null);
       navigate("/seller/my-products");
-    } catch (error) {
-      toast.error(error.message || "Failed to add product");
+    } catch (err) {
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -136,171 +111,234 @@ function AddProduct() {
 
   const displayWeight = form.weight === "custom" ? form.customWeight : form.weight;
 
-  // ============================
-  // Render
-  // ============================
   return (
     <PageContainer>
-      <div className="p-4 sm:p-6 max-w-6xl mx-auto">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
-        ➕ Add New Product
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Form */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Product Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Product Name</label>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+      <div className="p-6 max-w-6xl mx-auto">
 
-            {/* Price */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Price (₹)</label>
-              <input
-                type="number"
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                min="0"
-                required
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+        <h2 className="text-3xl font-extrabold text-center text-white mb-10 drop-shadow-lg">
+          ➕ Add New Product
+        </h2>
 
-            {/* Weight & Quantity */}
-            <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+          {/* FORM CARD */}
+          <div className="
+            backdrop-blur-xl bg-white/10 border border-white/20 text-white
+            rounded-2xl p-6 shadow-2xl hover:bg-white/20 transition
+          ">
+            <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Name */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
-                  <FaBalanceScale className="text-gray-500" /> Weight
-                </label>
-                <select
-                  name="weight"
-                  value={form.weight}
-                  onChange={handleChange}
-                  required
-                  className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Weight</option>
-                  <option value="250g">250 g</option>
-                  <option value="500g">500 g</option>
-                  <option value="1kg">1 kg</option>
-                  <option value="2kg">2 kg</option>
-                  <option value="custom">Custom</option>
-                </select>
-                {form.weight === "custom" && (
-                  <input
-                    type="text"
-                    name="customWeight"
-                    value={form.customWeight}
-                    onChange={handleChange}
-                    placeholder="Enter custom weight"
-                    className="mt-2 w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
-                  <FaBoxes className="text-gray-500" /> Quantity
-                </label>
+                <label className="font-semibold text-sm">Product Name</label>
                 <input
-                  type="number"
-                  name="quantity"
-                  value={form.quantity}
+                  type="text"
+                  name="name"
+                  value={form.name}
                   onChange={handleChange}
-                  min="1"
                   required
-                  className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="
+                    w-full mt-1 p-3 rounded-lg bg-white/20 text-white
+                    border border-white/30 focus:ring-2 focus:ring-yellow-400
+                  "
                 />
               </div>
-            </div>
 
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                rows="4"
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              {/* Price */}
+              <div>
+                <label className="font-semibold text-sm">Price (₹)</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={form.price}
+                  onChange={handleChange}
+                  required
+                  className="
+                    w-full mt-1 p-3 rounded-lg bg-white/20 text-white
+                    border border-white/30 focus:ring-2 focus:ring-yellow-400
+                  "
+                />
+              </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Category</label>
-              <select
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                required
-                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500"
+              {/* Weight & Quantity */}
+              <div className="grid grid-cols-2 gap-5">
+
+                {/* Weight */}
+                <div>
+                  <label className="font-semibold text-sm flex items-center gap-2">
+                    <FaBalanceScale /> Weight
+                  </label>
+
+                  <select
+                    name="weight"
+                    value={form.weight}
+                    onChange={handleChange}
+                    className="
+                      w-full bg-white/20 backdrop-blur-xl 
+                      border border-white/40 rounded-lg shadow-md 
+                      pl-4 pr-10 py-3 text-white font-semibold 
+                      hover:bg-white/30 transition-all
+                      appearance-none
+                    "
+                  >
+                    <option value="">Select Weight</option>
+                    <option value="250g">250 g</option>
+                    <option value="500g">500 g</option>
+                    <option value="1kg">1 kg</option>
+                    <option value="2kg">2 kg</option>
+                    <option value="custom">Custom Weight</option>
+                  </select>
+
+                  {form.weight === "custom" && (
+                    <input
+                      type="text"
+                      name="customWeight"
+                      value={form.customWeight}
+                      onChange={handleChange}
+                      placeholder="Enter weight"
+                      className="
+                        w-full mt-2 p-3 rounded-lg bg-white/20 text-white
+                        border border-white/30 focus:ring-2 focus:ring-yellow-400
+                      "
+                    />
+                  )}
+
+                </div>
+
+                {/* Quantity */}
+                <div>
+                  <label className="font-semibold text-sm flex items-center gap-2">
+                    <FaBoxes /> Quantity
+                  </label>
+                  <input
+                    type="number"
+                    name="quantity"
+                    value={form.quantity}
+                    onChange={handleChange}
+                    className="
+                      w-full mt-1 p-3 rounded-lg bg-white/20 text-white
+                      border border-white/30 focus:ring-2 focus:ring-yellow-400
+                    "
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="font-semibold text-sm">Description</label>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  rows="4"
+                  className="
+                    w-full mt-1 p-3 rounded-lg bg-white/20 text-white
+                    border border-white/30 focus:ring-2 focus:ring-yellow-400
+                  "
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="font-semibold text-sm">Category</label>
+
+                <select
+                  name="category"
+                  value={form.category}
+                  onChange={handleChange}
+                  required
+                  className="
+                    w-full mt-1 p-3 rounded-lg text-white
+                    bg-white/20 border border-white/40 backdrop-blur-xl
+                    focus:ring-2 focus:ring-yellow-300
+                    hover:bg-white/30 transition
+                  "
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Image */}
+              <div>
+                <label className="font-semibold text-sm mb-1 block">Product Image</label>
+
+                <label
+                  className="
+                    cursor-pointer flex items-center justify-center gap-3
+                    p-4 rounded-xl border border-dashed border-white/40
+                    bg-white/10 hover:bg-white/20 transition
+                  "
+                >
+                  <FaUpload /> Upload Image
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="
+                  w-full py-3 rounded-xl font-semibold
+                  bg-yellow-500 hover:bg-yellow-600 text-black
+                  shadow-lg hover:shadow-yellow-500/40 transition
+                "
               >
-                <option value="">Select Category</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Image Upload */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Product Image</label>
-              <label className="flex items-center justify-center gap-3 cursor-pointer border border-dashed p-4 rounded-lg hover:border-blue-500 hover:bg-blue-50">
-                <FaUpload className="text-gray-500" />
-                <span className="text-gray-600">Upload Product Image</span>
-                <input type="file" name="image" accept="image/*" onChange={handleChange} className="hidden" />
-              </label>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full ${
-                loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-              } text-white px-4 py-3 rounded-lg font-semibold transition-all`}
-            >
-              {loading ? "Adding Product..." : "➕ Add Product"}
-            </button>
-          </form>
-        </div>
-
-        {/* Preview */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 flex flex-col items-center">
-          {preview ? (
-            <img src={preview} alt="Product Preview" className="w-48 h-48 object-cover rounded-xl border mb-4" />
-          ) : (
-            <div className="w-48 h-48 flex items-center justify-center border-2 border-dashed rounded-xl text-gray-400">
-              No Image
-            </div>
-          )}
-          <div className="text-center space-y-2">
-            <h3 className="text-lg font-bold text-gray-800">{form.name || "Product Name"}</h3>
-            <p className="text-yellow-600 text-lg font-semibold">{form.price ? `₹${form.price}` : "Price"}</p>
-            <p className="text-gray-600 text-sm">⚖️ {displayWeight || "Weight"}</p>
-            <p className="text-gray-600 text-sm">📦 {form.quantity || 1}</p>
-            <p className="text-gray-600 text-sm">
-              📑 {categories.find((c) => c._id === form.category)?.name || "Category"}
-            </p>
-            <p className="text-gray-500 text-sm italic mt-2">
-              {form.description || "Product description will appear here."}
-            </p>
+                {loading ? "Submitting..." : "➕ Add Product"}
+              </button>
+            </form>
           </div>
+
+          {/* PREVIEW CARD */}
+          <div className="
+            backdrop-blur-xl bg-white/10 border border-white/20 text-white
+            rounded-2xl p-6 shadow-2xl flex flex-col items-center
+            hover:bg-white/20 transition
+          ">
+            {preview ? (
+              <img
+                src={preview}
+                alt="Product"
+                className="
+                  w-48 h-48 object-cover rounded-xl border border-white/30 shadow-lg
+                "
+              />
+            ) : (
+              <div className="
+                w-48 h-48 flex items-center justify-center
+                border-2 border-dashed border-white/40 rounded-xl text-gray-300
+              ">
+                No Image
+              </div>
+            )}
+
+            <div className="text-center mt-4 space-y-2">
+              <h3 className="text-xl font-semibold">{form.name || "Product Name"}</h3>
+              <p className="text-yellow-300 text-lg font-bold">
+                {form.price ? `₹${form.price}` : "Price"}
+              </p>
+              <p className="text-white/80">⚖️ {displayWeight || "Weight"}</p>
+              <p className="text-white/80">📦 {form.quantity || 1}</p>
+              <p className="text-white/80">
+                📑 {categories.find((c) => c._id === form.category)?.name || "Category"}
+              </p>
+              <p className="text-white/70 italic mt-2">
+                {form.description || "Product description will appear here."}
+              </p>
+            </div>
+          </div>
+
         </div>
-      </div>
       </div>
     </PageContainer>
   );

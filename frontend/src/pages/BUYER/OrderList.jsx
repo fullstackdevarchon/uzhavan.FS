@@ -15,27 +15,27 @@ const API_URL = "http://localhost:5000/api/v1/orders";
 
 const STATUS_META = {
   Delivered: {
-    color: "text-green-700 bg-green-100 border-green-300",
+    color: "text-green-700 bg-green-200/30 border-green-400",
     icon: <FaCheckCircle className="mr-2" />,
     step: 4,
   },
   Shipped: {
-    color: "text-indigo-700 bg-indigo-100 border-indigo-300",
+    color: "text-indigo-700 bg-indigo-200/30 border-indigo-400",
     icon: <FaTruck className="mr-2" />,
     step: 3,
   },
   Confirmed: {
-    color: "text-blue-700 bg-blue-100 border-blue-300",
+    color: "text-blue-700 bg-blue-200/30 border-blue-400",
     icon: <FaTruck className="mr-2" />,
     step: 2,
   },
   "Order Placed": {
-    color: "text-gray-700 bg-gray-100 border-gray-300",
+    color: "text-gray-700 bg-gray-200/30 border-gray-400",
     icon: <FaTruck className="mr-2" />,
     step: 1,
   },
   Cancelled: {
-    color: "text-red-700 bg-red-100 border-red-300",
+    color: "text-red-700 bg-red-200/30 border-red-400",
     icon: <FaTimesCircle className="mr-2" />,
     step: -1,
   },
@@ -44,45 +44,58 @@ const STATUS_META = {
 const STEPS = ["Placed", "Confirmed", "Shipped", "Delivered"];
 
 const Stepper = ({ currentStep, cancelled }) => (
-  <div className="relative w-full flex justify-between items-center">
+  <div className="w-full flex justify-between items-center relative">
+
     {STEPS.map((step, index) => {
       const stepNumber = index + 1;
-      const isActive = stepNumber <= currentStep && !cancelled;
+      const isCompleted = stepNumber < currentStep && !cancelled;
+      const isActive = stepNumber === currentStep && !cancelled;
 
       return (
         <div key={step} className="flex flex-col items-center flex-1 relative">
+
+          {/* CONNECTOR LINE (BETWEEN CIRCLES) */}
+          {index < STEPS.length - 1 && (
+            <div className="absolute top-5 left-1/2 w-full">
+              <div
+                className={`
+                  h-1 
+                  ${cancelled
+                    ? "bg-red-300"
+                    : isCompleted
+                    ? "bg-green-500"
+                    : "bg-gray-300"}
+                `}
+              ></div>
+            </div>
+          )}
+
+          {/* STEP CIRCLE */}
           <div
-            className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold z-10 shadow ${
-              cancelled
-                ? "bg-red-500 text-white"
-                : isActive
-                ? "bg-green-600 text-white"
-                : "bg-gray-300 text-gray-600"
-            }`}
+            className={`
+              w-10 h-10 rounded-full flex items-center justify-center 
+              text-sm font-bold shadow-md z-10
+              ${
+                cancelled
+                  ? "bg-red-500 text-white"
+                  : isCompleted || isActive
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-300 text-gray-700"
+              }
+            `}
           >
             {cancelled ? "✕" : stepNumber}
           </div>
 
-          {index < STEPS.length - 1 && (
-            <div
-              className={`absolute top-4 left-1/2 w-full h-1 ${
-                cancelled
-                  ? "bg-red-300"
-                  : stepNumber < currentStep
-                  ? "bg-green-500"
-                  : "bg-gray-300"
-              }`}
-            />
-          )}
-
-          <span className="mt-2 text-xs text-gray-700 font-medium">
-            {step}
-          </span>
+          {/* STEP LABEL */}
+          <span className="mt-2 text-xs text-gray-200">{step}</span>
         </div>
       );
     })}
   </div>
 );
+
+
 
 const formatAddress = (address) => {
   if (!address || typeof address !== "object") return "Default address";
@@ -98,30 +111,39 @@ const OrderCard = ({ order, onCancel, isExpanded, toggleExpand }) => {
   const currentStep = cancelled ? 0 : meta.step;
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-200 hover:shadow-lg transition">
-      <div className="p-5 grid gap-5 md:grid-cols-[1fr_auto_auto] items-center">
-        {/* Left */}
-        <div className="min-w-0">
-          <h3 className="text-xl font-semibold text-gray-900">
-            Order #{order._id.slice(-6).toUpperCase()}
+    <div className="
+      bg-white/10 backdrop-blur-xl border border-white/20 
+      rounded-2xl p-6 shadow-2xl transition-all duration-300
+      hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]
+    ">
+      <div className="grid gap-5 md:grid-cols-[1fr_auto_auto] items-center">
+
+        {/* LEFT SECTION */}
+        <div className="min-w-0 text-white">
+          <h3 className="text-xl font-bold tracking-wide">
+            ORDER #{order._id.slice(-6).toUpperCase()}
           </h3>
-          <div className="mt-1 text-sm text-gray-600">
+
+          <div className="mt-1 text-sm text-gray-200">
             Ordered on{" "}
-            <span className="font-medium text-gray-800">
+            <span className="font-semibold text-white">
               {new Date(order.createdAt).toLocaleDateString()}
             </span>
           </div>
-          <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
-            <FaMapMarkerAlt className="text-gray-500" />
+
+          <div className="mt-1 flex items-center gap-2 text-sm text-gray-100">
+            <FaMapMarkerAlt className="text-gray-300" />
             <span className="truncate">
               Deliver to: {formatAddress(order.address)}
             </span>
           </div>
-          <div className="mt-2 text-lg font-bold text-indigo-700">
+
+          <div className="mt-2 text-lg font-bold text-yellow-300">
             ₹ {Number(order.total).toFixed(2)}
           </div>
-          <div className="mt-3 text-sm text-gray-800">
-            <span className="font-medium">Products: </span>
+
+          <div className="mt-3 text-sm text-gray-100">
+            <span className="font-semibold text-white">Products: </span>
             {order.products?.map((p, i) => (
               <span key={i}>
                 {p.product?.name}
@@ -131,21 +153,25 @@ const OrderCard = ({ order, onCancel, isExpanded, toggleExpand }) => {
           </div>
         </div>
 
-        {/* Status */}
+        {/* STATUS BADGE */}
         <div className="flex items-center justify-center">
           <span
-            className={`inline-flex items-center px-3 py-1 rounded-full border text-sm ${meta.color}`}
+            className={`inline-flex items-center px-3 py-1 rounded-full border text-sm font-semibold ${meta.color}`}
           >
             {meta.icon}
             {order.status}
           </span>
         </div>
 
-        {/* Actions */}
+        {/* ACTION BUTTONS */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-end gap-3">
           <button
             onClick={toggleExpand}
-            className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-100 transition flex items-center justify-center"
+            className="
+              px-3 py-2 text-sm border rounded-lg 
+              bg-white/20 text-white border-white/30 
+              hover:bg-white/30 transition flex items-center shadow-sm
+            "
           >
             Track Order
             <FaChevronDown
@@ -158,7 +184,11 @@ const OrderCard = ({ order, onCancel, isExpanded, toggleExpand }) => {
           {!cancelled && order.status !== "Delivered" && (
             <button
               onClick={() => onCancel(order._id)}
-              className="px-3 py-2 text-sm border rounded-lg text-red-600 hover:bg-red-50 transition"
+              className="
+                px-3 py-2 text-sm border rounded-lg 
+                text-red-300 bg-red-500/20 border-red-400/40
+                hover:bg-red-500/30 transition shadow-sm
+              "
             >
               Cancel My Order
             </button>
@@ -166,15 +196,11 @@ const OrderCard = ({ order, onCancel, isExpanded, toggleExpand }) => {
         </div>
       </div>
 
-      {/* Expanded Section */}
+      {/* EXPANDED PANEL */}
       {isExpanded && (
-        <div className="px-5 pb-5">
-          <div className="pt-4 border-t">
-            <h4 className="text-lg font-semibold text-gray-800 mb-4">
-              Track Order
-            </h4>
-            <Stepper currentStep={currentStep} cancelled={cancelled} />
-          </div>
+        <div className="pt-4 mt-4 border-t border-white/20 text-white">
+          <h4 className="text-lg font-semibold mb-4">Track Order Status</h4>
+          <Stepper currentStep={currentStep} cancelled={cancelled} />
         </div>
       )}
     </div>
@@ -195,11 +221,10 @@ const OrderList = () => {
         const res = await fetch(API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error("Failed to fetch orders");
         const data = await res.json();
         setOrders(data.orders || []);
       } catch (err) {
-        console.error("Fetch error:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -219,8 +244,11 @@ const OrderList = () => {
   const filtered = useMemo(() => {
     const base =
       filter === "All" ? orders : orders.filter((o) => o.status === filter);
+
     if (!query.trim()) return base;
+
     const q = query.toLowerCase();
+
     return base.filter(
       (o) =>
         String(o._id).includes(q) ||
@@ -243,19 +271,15 @@ const OrderList = () => {
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
 
-      if (!res.ok) {
-        throw new Error(data.message || "Cancel failed");
-      }
-
-      // Update status in UI immediately
       setOrders((prev) =>
         prev.map((o) => (o._id === id ? { ...o, status: "Cancelled" } : o))
       );
+
       alert("Order cancelled successfully!");
     } catch (err) {
-      console.error("Cancel error:", err);
-      alert(err.message || "Failed to cancel order. Please try again.");
+      alert(err.message);
     }
   };
 
@@ -264,19 +288,19 @@ const OrderList = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">Loading your orders...</p>
+      <div className="min-h-screen flex items-center justify-center text-white text-lg font-medium">
+        Loading your orders...
       </div>
     );
 
   return (
     <PageContainer>
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">
-          My Orders
+        <h1 className="text-4xl font-bold text-white mb-8 text-center tracking-wide">
+          MY ORDERS
         </h1>
 
-        {/* Filters + Search */}
+        {/* FILTERS & SEARCH */}
         <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-6">
           <div className="flex flex-wrap gap-2">
             {filters.map((f) => {
@@ -285,11 +309,12 @@ const OrderList = () => {
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className={`px-4 py-2 rounded-full border text-sm transition ${
-                    active
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-gray-800 border-gray-300 hover:bg-gray-100"
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm shadow 
+                    ${
+                      active
+                        ? "bg-indigo-600 text-white shadow-indigo-300"
+                        : "bg-white/10 border border-white/20 text-white hover:bg-white/20"
+                    }`}
                 >
                   {f}
                 </button>
@@ -297,37 +322,41 @@ const OrderList = () => {
             })}
           </div>
 
+          {/* SEARCH BAR */}
           <div className="md:ml-auto w-full md:w-80">
             <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by product or order id"
-                className="w-full pl-10 pr-3 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
+                placeholder="Search orders..."
+                className="
+                  w-full pl-10 pr-3 py-2 rounded-xl 
+                  border border-white/20 bg-white/10 text-white 
+                  placeholder-gray-300 shadow-sm 
+                  focus:outline-none focus:ring-2 focus:ring-indigo-500
+                "
               />
             </div>
           </div>
         </div>
 
-        {/* Orders */}
+        {/* ORDER CARDS */}
         {filtered.length === 0 ? (
-          <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-12 text-center">
-            <h3 className="text-xl font-semibold text-gray-800">
-              No orders found
-            </h3>
-            <p className="text-gray-600 mt-1">
-              Try clearing filters or searching with a different term.
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-12 text-center shadow-2xl text-white">
+            <h3 className="text-xl font-semibold">No orders found</h3>
+            <p className="text-gray-200 mt-1">
+              Try another filter or search keyword.
             </p>
             <Link
               to="/"
-              className="inline-block mt-6 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+              className="inline-block mt-6 px-5 py-2.5 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700"
             >
               Continue Shopping
             </Link>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-6">
             {filtered.map((o) => (
               <OrderCard
                 key={o._id}

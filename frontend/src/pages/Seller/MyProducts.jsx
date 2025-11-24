@@ -16,9 +16,10 @@ const MyProducts = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const { data } = await axios.get("http://localhost:5000/api/v1/products/seller", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get(
+        "http://localhost:5000/api/v1/products/seller",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       if (data.success) {
         setProducts(data.products);
@@ -58,7 +59,7 @@ const MyProducts = () => {
     setNewStock(product.quantity);
   };
 
-  // Update stock API call
+  // Update stock API
   const handleUpdateStock = async () => {
     if (!newStock || isNaN(newStock)) {
       toast.error("Please enter a valid number");
@@ -92,126 +93,128 @@ const MyProducts = () => {
 
   return (
     <PageContainer>
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-gray-800 text-center">
-        📦 My Products
-      </h2>
+      <div className="p-6 max-w-7xl mx-auto text-white">
+        <h2 className="text-3xl font-extrabold text-center mb-10 drop-shadow-lg">
+          📦 My Products
+        </h2>
 
-      {loading ? (
-        <p className="text-center text-gray-500">Loading products...</p>
-      ) : products.length === 0 ? (
-        <p className="text-gray-500 text-center">No products found</p>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div
-              key={product._id}
-              className="border rounded-2xl shadow-lg flex flex-col bg-white hover:shadow-2xl transition overflow-hidden"
-            >
-              {/* Image */}
-              <div className="w-full h-56 bg-gray-100">
-                <img
-                  src={
-                    typeof product.image === "object"
-                      ? product.image.url
-                      : product.image
-                  }
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) =>
-                    (e.target.src =
-                      "https://via.placeholder.com/300x200?text=No+Image")
-                  }
-                />
-              </div>
+        {loading ? (
+          <p className="text-center text-gray-200">Loading products...</p>
+        ) : products.length === 0 ? (
+          <p className="text-gray-300 text-center">No products found</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
+            {products.map((product) => (
+              <div
+                key={product._id}
+                className="rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl hover:shadow-3xl hover:-translate-y-2 transition overflow-hidden group"
+              >
+                {/* Image */}
+                <div className="w-full h-56 bg-gray-200/30 overflow-hidden">
+                  <img
+                    src={
+                      typeof product.image === "object"
+                        ? product.image.url
+                        : product.image
+                    }
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) =>
+                      (e.target.src =
+                        "https://via.placeholder.com/300x200?text=No+Image")
+                    }
+                  />
+                </div>
 
-              {/* Product Info */}
-              <div className="p-4 flex flex-col flex-1">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
-                  {product.name}
-                </h3>
-                <p className="text-lg font-bold text-green-600 mb-2">
-                  ₹{product.price}
-                </p>
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="text-lg font-bold mb-2 line-clamp-2">
+                    {product.name}
+                  </h3>
 
-                {product.weight && (
-                  <p className="text-gray-700 text-sm">
-                    <strong>Weight:</strong> {product.weight}
+                  <p className="text-xl font-bold text-[#1b3c2b] mb-2">
+                    ₹{product.price}
                   </p>
-                )}
 
-                <div className="flex justify-between text-sm mt-2 mb-3">
-                  <span className="text-blue-600 font-semibold">
-                    Stock: {product.quantity}
-                  </span>
-                  <span className="text-purple-600 font-semibold">
-                    Sold: {product.sold || 0}
-                  </span>
-                </div>
+                  {product.weight && (
+                    <p className="text-gray-300 text-sm mb-2">
+                      <strong>Weight:</strong> {product.weight}
+                    </p>
+                  )}
 
-                <div className="flex gap-2 mt-auto">
-                  {/* Update Button */}
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="flex items-center justify-center gap-2 bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition flex-1"
-                  >
-                    <FaEdit /> Update Stock
-                  </button>
+                  <div className="flex justify-between text-sm mb-4">
+                    <span className="font-semibold text-blue-300">
+                      Stock: {product.quantity}
+                    </span>
+                    <span className="font-semibold text-purple-300">
+                      Sold: {product.sold || 0}
+                    </span>
+                  </div>
 
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => handleDelete(product._id)}
-                    className="flex items-center justify-center gap-2 bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition"
-                  >
-                    <FaTrash />
-                  </button>
+                  {/* Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleEdit(product)}
+                      className="flex items-center justify-center gap-2 bg-blue-600/80 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition flex-1"
+                    >
+                      <FaEdit /> Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(product._id)}
+                      className="p-3 bg-red-600/80 hover:bg-red-700 text-white rounded-lg shadow-lg transition"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      {/* Edit Stock Modal */}
-      {editingProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-80">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">
-                Update Stock
-              </h3>
-              <button
-                onClick={() => setEditingProduct(null)}
-                className="text-gray-600 hover:text-red-500"
-              >
-                <FaTimes />
-              </button>
-            </div>
-            <p className="text-gray-600 mb-4">{editingProduct.name}</p>
-            <input
-              type="number"
-              value={newStock}
-              onChange={(e) => setNewStock(e.target.value)}
-              className="border w-full rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none mb-4"
-              placeholder="Enter new stock quantity"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setEditingProduct(null)}
-                className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateStock}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Save
-              </button>
+        {/* Edit Stock Modal */}
+        {editingProduct && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex justify-center items-center z-50">
+            <div className="bg-white/10 backdrop-blur-2xl border border-white/30 p-6 rounded-2xl shadow-2xl w-80 text-white">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">Update Stock</h3>
+                <button
+                  onClick={() => setEditingProduct(null)}
+                  className="text-gray-300 hover:text-red-400"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <p className="text-gray-200 mb-4">{editingProduct.name}</p>
+
+              <input
+                type="number"
+                value={newStock}
+                onChange={(e) => setNewStock(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-black/20 text-white border border-white/30 focus:ring-2 focus:ring-blue-400 outline-none mb-4"
+                placeholder="Enter new quantity"
+              />
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setEditingProduct(null)}
+                  className="px-4 py-2 rounded-lg border border-white/30 hover:bg-white/20 transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleUpdateStock}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </PageContainer>
   );

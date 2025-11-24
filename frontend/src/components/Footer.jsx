@@ -2,7 +2,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp } from "react-icons/fa";
-import { FiShoppingCart, FiUserPlus, FiLogIn } from "react-icons/fi";
+import { FiShoppingCart } from "react-icons/fi";
 
 const Footer = () => {
   const navLinks = [
@@ -10,56 +10,72 @@ const Footer = () => {
     { name: "Products", to: "/product" },
     { name: "About", to: "/about" },
     { name: "Contact", to: "/contact" },
-    // { name: "Login", to: "/login", icon: <FiLogIn className="inline mr-1" /> },
-    // { name: "Register", to: "/register", icon: <FiUserPlus className="inline mr-1" /> },
-    { name: "Cart", to: "/cart", icon: <FiShoppingCart className="inline mr-1" /> },
+    { 
+      name: "Cart", 
+      to: "/cart", 
+      icon: <FiShoppingCart className="inline-block mr-1" /> 
+    },
   ];
 
   return (
-    <footer className="bg-gray-900 text-gray-300 py-10 mt-10">
-      <div className="container mx-auto px-6 lg:px-12 text-center">
+    <footer className="w-full bg-white/5 backdrop-blur-xl border-t border-white/20 mt-20 py-12 shadow-inner">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
 
-        {/* Logo / Brand */}
-        <NavLink to="/" className="text-2xl font-bold text-white mb-4 inline-block">
-          Terravale Ventures LLP 
-        </NavLink>
+        {/* Brand Name */}
+        <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-wide drop-shadow mb-4">
+          Terravale Ventures LLP
+        </h2>
 
-        {/* Nav Links */}
-        <div className="flex justify-center gap-6 mt-4 flex-wrap text-lg font-semibold">
+        {/* Navigation Links */}
+        <nav className="flex flex-wrap justify-center gap-6 mt-4 text-lg font-semibold">
           {navLinks.map((link) => (
             <NavLink
               key={link.name}
               to={link.to}
               className={({ isActive }) =>
-                `hover:text-yellow-300 transition-colors duration-300 ${
-                  isActive ? "text-yellow-300 underline underline-offset-4" : ""
-                }`
+                `
+                transition-all duration-300 px-3 py-1 rounded-md
+                ${
+                  isActive
+                    ? "text-[#8FE3A2] underline underline-offset-4 decoration-[rgba(27,60,43,0.9)]"
+                    : "text-[#C7DAD1] hover:text-white hover:bg-[rgba(27,60,43,0.6)]"
+                }
+                `
               }
             >
-              {link.icon && link.icon} {link.name}
+              {link.icon} {link.name}
             </NavLink>
+          ))}
+        </nav>
+
+        {/* Social Icons */}
+        <div className="flex justify-center gap-5 mt-8 text-xl">
+          {[FaFacebookF, FaInstagram, FaYoutube, FaWhatsapp].map((Icon, i) => (
+            <a
+              key={i}
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="
+                text-[#C7DAD1]
+                p-3 rounded-full 
+                transition-all duration-300
+                hover:text-white 
+                hover:bg-[rgba(27,60,43,0.6)]
+                hover:scale-110
+              "
+            >
+              <Icon />
+            </a>
           ))}
         </div>
 
-        {/* Social Icons */}
-        <div className="flex justify-center gap-4 mt-6 text-xl">
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
-            <FaFacebookF />
-          </a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
-            <FaInstagram />
-          </a>
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">
-            <FaYoutube />
-          </a>
-          <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer" className="hover:text-white">
-            <FaWhatsapp />
-          </a>
-        </div>
+        {/* Divider Line */}
+        <div className="w-full h-px bg-white/20 mt-10"></div>
 
         {/* Copyright */}
-        <p className="text-sm text-gray-400 mt-6">
-          © {new Date().getFullYear()} Terravale Ventures LLP . All rights reserved.
+        <p className="text-[#C7DAD1] text-sm mt-6 tracking-wide">
+          © {new Date().getFullYear()} Terravale Ventures LLP. All rights reserved.
         </p>
       </div>
     </footer>

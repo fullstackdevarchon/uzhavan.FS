@@ -1,31 +1,39 @@
 // src/pages/Admin/Orders.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { FaTruck, FaClipboardList, FaUser, FaSearch, FaFilter } from "react-icons/fa";
+import {
+  FaTruck,
+  FaClipboardList,
+  FaUser,
+  FaSearch,
+  FaFilter,
+} from "react-icons/fa";
 import PageContainer from "../../components/PageContainer";
+import Preloader from "../../components/Preloader";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [loading, setLoading] = useState(true);
+  const [showPreloader, setShowPreloader] = useState(true); // 👈 start with preloader visible
 
   // 🔥 Fetch orders from API
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        setLoading(true);
         const res = await axios.get(
           "http://localhost:5000/api/v1/orders/admin/all",
-          { withCredentials: true } // ✅ if using cookies/JWT
+          { withCredentials: true }
         );
-        setOrders(res.data.orders || []); // assuming API returns { orders: [...] }
+        setOrders(res.data.orders || []);
       } catch (err) {
         console.error("❌ Error fetching orders:", err);
       } finally {
-        setLoading(false);
+        // ⏳ Show preloader for 3 seconds before fade
+        setTimeout(() => setShowPreloader(false), 3000);
       }
     };
+
     fetchOrders();
   }, []);
 
@@ -42,8 +50,7 @@ const Orders = () => {
       customerName.includes(search.toLowerCase()) ||
       productsList.includes(search.toLowerCase());
 
-    const matchesFilter =
-      filter === "All" ? true : order.status === filter;
+    const matchesFilter = filter === "All" ? true : order.status === filter;
 
     return matchesSearch && matchesFilter;
   });
@@ -57,12 +64,17 @@ const Orders = () => {
     Cancelled: "bg-red-100 text-red-800 border-red-300",
   };
 
+  // // ⏳ Show Preloader
+  // if (showPreloader) {
+  //   return <Preloader />;
+  // }
+
   return (
     <PageContainer>
-      <div className=" p-8">
+      <div className="min-h-screen p-8">
         {/* Page Title */}
-        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
-          <FaClipboardList className="text-green-600" /> 
+        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-100 mb-8 flex items-center gap-3">
+          <FaClipboardList className="text-green-300" />
           Order Management
         </h2>
 
@@ -101,9 +113,11 @@ const Orders = () => {
         </div>
 
         {/* Orders Grid */}
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
+        {filteredOrders.length === 0 ? (
+          <div className="flex items-center justify-center py-16">
+            <p className="text-gray-500 text-lg font-medium">
+              No orders found.
+            </p>
           </div>
         ) : (
           <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -113,14 +127,17 @@ const Orders = () => {
                 className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border-t-4 border-green-500 
                            p-6 hover:shadow-2xl transition transform hover:-translate-y-1"
               >
-                {/* Order Content */}
                 <div className="flex flex-col gap-4">
                   {/* Header */}
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-bold text-gray-700">
                       Order #{order._id.slice(-6)}
                     </span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusClasses[order.status]}`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                        statusClasses[order.status]
+                      }`}
+                    >
                       {order.status}
                     </span>
                   </div>
@@ -129,8 +146,12 @@ const Orders = () => {
                   <div className="flex items-center gap-3 bg-gray-50/80 p-3 rounded-lg">
                     <FaUser className="text-green-600" />
                     <div>
-                      <p className="font-semibold">{order?.address?.fullName}</p>
-                      <p className="text-sm text-gray-600">{order?.address?.email}</p>
+                      <p className="font-semibold">
+                        {order?.address?.fullName || "Unknown"}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {order?.address?.email || "No email"}
+                      </p>
                     </div>
                   </div>
 
@@ -152,7 +173,9 @@ const Orders = () => {
                   {/* Total */}
                   <div className="flex justify-between items-center pt-3 border-t">
                     <span className="text-gray-600">Total Amount:</span>
-                    <span className="text-lg font-bold text-green-600">₹{order.total}</span>
+                    <span className="text-lg font-bold text-green-600">
+                      ₹{order.total}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -163,10 +186,15 @@ const Orders = () => {
         {/* Footer Summary */}
         <div className="mt-8 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-6">
           <div className="flex justify-between items-center">
-            <span className="text-gray-700 font-medium">Total Orders: {filteredOrders.length}</span>
             <span className="text-gray-700 font-medium">
-              Pending / Cancelled: {
-                filteredOrders.filter(o => ['Pending', 'Cancelled'].includes(o.status)).length
+              Total Orders: {filteredOrders.length}
+            </span>
+            <span className="text-gray-700 font-medium">
+              Pending / Cancelled:{" "}
+              {
+                filteredOrders.filter((o) =>
+                  ["Pending", "Cancelled"].includes(o.status)
+                ).length
               }
             </span>
           </div>

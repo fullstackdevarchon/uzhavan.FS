@@ -1,58 +1,98 @@
 // src/pages/Home.jsx
 import React, { useEffect, useState } from "react";
+import Preloader from "./Preloader";
+import { Link } from "react-router-dom";
 
 const Home = () => {
-  const [navHeight, setNavHeight] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getNav = () =>
-      document.querySelector("nav") ||
-      document.querySelector("header") ||
-      document.querySelector(".navbar") ||
-      document.getElementById("navbar");
-
-    const measure = () => {
-      const nav = getNav();
-      const h = nav ? Math.round(nav.getBoundingClientRect().height) : 0;
-      setNavHeight(h);
-    };
-
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    const timer = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(timer);
   }, []);
 
+  if (loading) return <Preloader />;
+
   return (
-    <section className="w-full">
+    <section className="w-full min-h-screen font-poppins">
 
-      {/* Hero Section */}
+      {/* HERO SECTION */}
       <div
-        className={`relative flex items-center justify-center`}
-        style={{ paddingTop: `${navHeight}px` }} // ensures content starts below nav
+        className="
+          flex items-center justify-center
+          min-h-screen w-full
+          bg-cover bg-center bg-no-repeat
+          animate-zoomBg
+        "
+        style={{
+          backgroundImage: "url('/assets/home-bg.jpg')",
+        }}
       >
-      
+        {/* Soft Overlay (makes text readable) */}
+        <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/10 to-white/20"></div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-6 text-center md:text-left flex flex-col justify-center items-center md:items-start py-20 md:py-32">
-          <h1 className="text-white text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-extrabold mb-4 sm:mb-6 md:mb-8 tracking-wide drop-shadow-lg">
-            Welcome to <span className="text-green-400">Terravale Ventures LLP </span>
+        {/* CONTENT BLOCK */}
+        <div
+          className="
+            relative z-10 container mx-auto px-6
+            text-center md:text-left
+            flex flex-col justify-center
+            items-center md:items-start 
+            py-28 md:py-36
+            animate-fadeUp
+          "
+        >
+          {/* TITLE */}
+          <h1
+            className="
+              text-[#1C3F2C] 
+              text-4xl sm:text-5xl lg:text-6xl 
+              font-extrabold 
+              mb-6 leading-tight tracking-wide 
+              drop-shadow-lg
+            "
+          >
+            Welcome to{" "}
+            <span className="text-green-700">Terravale Ventures LLP</span>
           </h1>
-          <p className="text-white text-sm sm:text-base md:text-lg lg:text-xl max-w-md md:max-w-2xl mx-auto md:mx-0 leading-relaxed mb-4 sm:mb-6 md:mb-8">
-            Terravale Ventures LLP  connects farmers and customers directly — delivering
-            fresh produce, authentic products, and trusted services. Explore
-            the latest agricultural solutions, empowering communities for a
-            sustainable tomorrow.
+
+          {/* DESCRIPTION */}
+          <p
+            className="
+              text-gray-900 
+              text-base sm:text-lg md:text-xl lg:text-2xl
+              max-w-5xl leading-relaxed mb-10 
+              drop-shadow
+              font-light
+              animate-fadeInSlow
+            "
+          >
+            Terravale Ventures LLP connects farmers and customers directly —
+            delivering fresh produce, authentic products, and trusted services.
+            Explore the latest agricultural solutions, empowering communities
+            for a sustainable tomorrow.
           </p>
-          <button className="mt-2 px-6 sm:px-8 py-2 sm:py-3 bg-green-500 text-white text-sm sm:text-lg font-semibold rounded-lg shadow-md hover:bg-green-600 transition">
-            Explore Now
-          </button>
+
+          {/* BUTTON */}
+          <Link to="/login">
+            <button
+              className="
+                px-12 py-4 text-lg font-semibold 
+                rounded-lg 
+                bg-[linear-gradient(to_right,#182E6F,rgba(27,60,43,0.6))]
+                text-white
+                shadow-xl hover:shadow-2xl 
+                transition-all duration-300 
+                hover:scale-110
+                backdrop-blur-md
+              "
+            >
+              Explore Now
+            </button>
+          </Link>
         </div>
       </div>
-
-      {/* Next Section Placeholder */}
-      {/* <div className="container mx-auto px-6 py-10">
-        
-      </div> */}
     </section>
   );
 };

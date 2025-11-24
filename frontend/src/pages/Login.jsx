@@ -1,29 +1,101 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import PageContainer from "../components/PageContainer";
+import Footer from "../components/Footer";
+
+// ⭐ Import Google OAuth
+import { GoogleLogin } from "@react-oauth/google";
 
 const Login = () => {
   const { role } = useParams();
   const navigate = useNavigate();
 
+  // States
   const [isRegister, setIsRegister] = useState(false);
-  const [isForgot, setIsForgot] = useState(false); // 🔹 New: forgot password mode
-  const [step, setStep] = useState(1); // 🔹 Step 1 = send OTP, Step 2 = verify OTP
+  const [isForgot, setIsForgot] = useState(false);
+  const [step, setStep] = useState(1);
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // ✅ Allowed roles
   const allowedRoles = ["buyer", "seller"];
-  const currentRole = allowedRoles.includes(role) ? role : "buyer"; // fallback: buyer
+  const currentRole = allowedRoles.includes(role) ? role : "buyer";
 
-  // 🔹 Handle Login / Register
+  // -----------------------
+  // Google Login
+  // -----------------------
+      const handleGoogleSuccess = async (credentialResponse) => {
+      console.log("Google Login Success:", credentialResponse);
+
+      const idToken = credentialResponse.credential;
+
+      if (!idToken) {
+        setError("Google Login Failed: No ID Token Found");
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:5000/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: idToken }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setError(data.message || "Google Login Failed");
+          return;
+        }
+
+        // Store user with token inside user object
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...data.user,
+            token: data.token,
+          })
+        );
+
+        // Optional separate storage
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.user.role);
+
+        // Save cookies
+        Cookies.set("token", data.token, { path: "/", expires: 1 });
+        Cookies.set("role", data.user.role, { path: "/", expires: 1 });
+
+        alert("Google Login Successful!");
+
+        // Redirect based on role
+        navigate(
+          data.user.role === "seller" ? "/seller/dashboard" : "/buyer-dashboard",
+          { replace: true }
+        );
+
+      } catch (err) {
+        console.error("Google Login Error:", err);
+        setError("An error occurred during Google login.");
+      }
+    };
+
+    // Google Login Error Handler
+    const handleGoogleError = () => {
+      setError("Google login failed. Please try again.");
+    };
+
+  // -----------------------
+  // Login / Register
+  // -----------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -47,11 +119,12 @@ const Login = () => {
       const data = await res.json();
       if (!res.ok) return setError(data.message || "Something went wrong");
 
-      // ✅ Login flow
+      // ⭐ Login
       if (!isRegister && data.user) {
         const { user, token } = data;
 
         if (!token) return setError("Authentication failed: No token received");
+
         if (user.role !== currentRole) {
           alert(`You are not a ${currentRole}! Your account is ${user.role}.`);
           return;
@@ -69,8 +142,8 @@ const Login = () => {
         localStorage.setItem("token", token);
         localStorage.setItem("role", user.role);
 
-        Cookies.set("token", token, { path: "/", expires: 1, sameSite: "Strict" });
-        Cookies.set("role", user.role, { path: "/", expires: 1, sameSite: "Strict" });
+        Cookies.set("token", token, { path: "/", expires: 1 });
+        Cookies.set("role", user.role, { path: "/", expires: 1 });
 
         alert("Login successful!");
 
@@ -78,20 +151,20 @@ const Login = () => {
           user.role === "seller" ? "/seller/dashboard" : "/buyer-dashboard",
           { replace: true }
         );
-      }
 
-      // ✅ Registration flow
-      else if (isRegister) {
+        // ⭐ Register Success
+      } else if (isRegister) {
         setSuccess("Registration successful! Please login.");
         setTimeout(() => setIsRegister(false), 1500);
       }
     } catch (err) {
-      console.error("Login error:", err);
-      setError(err.message || "Login failed");
+      setError("Login failed");
     }
   };
 
-  // 🔹 Handle sending OTP
+  // -----------------------
+  // Forgot Password – Send OTP
+  // -----------------------
   const handleSendOTP = async (e) => {
     e.preventDefault();
     setError("");
@@ -114,18 +187,23 @@ const Login = () => {
     }
   };
 
-  // 🔹 Handle resetting password
+  // -----------------------
+  // Forgot Password – Reset
+  // -----------------------
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/forgot/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, newPassword }),
-      });
+      const res = await fetch(
+        "http://localhost:5000/api/forgot/reset-password",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp, newPassword }),
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) return setError(data.message || "OTP verification failed");
@@ -140,189 +218,250 @@ const Login = () => {
     }
   };
 
+  // -----------------------
+  // UI
+  // -----------------------
   return (
     <PageContainer>
-      <main className="flex items-center justify-center">
-        <div className="w-full max-w-lg bg-white shadow-2xl rounded-2xl p-8 border border-gray-200">
-          {/* 🔹 Dynamic Heading */}
-          <h1 className="text-4xl font-extrabold text-center text-green-800 mb-2">
-            {isForgot
-              ? "Forgot Password"
-              : isRegister
-              ? "Create Account"
-              : "Welcome Back"}
-          </h1>
+      <main className="min-h-screen flex items-center justify-center py-8">
+        <div className="relative w-full max-w-3xl px-6">
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            {/* Left Panel */}
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10
+                p-4 shadow-xl">
+              <h2 className="text-3xl font-extrabold text-white mb-3">
+                Welcome Back
+              </h2>
+              <p className="text-gray-200 mb-6">
+                Login to access your dashboard, manage orders, events and more.
+              </p>
 
-          <p className="text-center text-gray-600 mb-8">
-            {isForgot
-              ? "Reset your password using OTP"
-              : isRegister
-              ? `Register as ${currentRole}`
-              : `Login as ${currentRole}`}
-          </p>
-
-          {/* Error / Success Alerts */}
-          {error && (
-            <div className="mb-4 bg-red-100 text-red-700 px-4 py-3 rounded">
-              {error}
+              <ul className="space-y-3 text-gray-100">
+                <li className="flex items-center gap-3">
+                  <span className="inline-block w-2 h-2 rounded-full bg-green-300" />
+                  Secure role-based access
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="inline-block w-2 h-2 rounded-full bg-green-300" />
+                  Google One-tap Login
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="inline-block w-2 h-2 rounded-full bg-green-300" />
+                  OTP Password Reset
+                </li>
+              </ul>
             </div>
-          )}
-          {success && (
-            <div className="mb-4 bg-green-100 text-green-700 px-4 py-3 rounded">
-              {success}
-            </div>
-          )}
 
-          {/* ============================== */}
-          {/* 🔹 Forgot Password Flow */}
-          {/* ============================== */}
-          {isForgot ? (
-            <form
-              className="space-y-6"
-              onSubmit={step === 1 ? handleSendOTP : handleResetPassword}
+            {/* Right Panel */}
+            <div
+              className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10
+                p-4 shadow-xl"
             >
-              <div>
-                <label className="block mb-2 font-semibold">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="border rounded-lg p-3 w-full"
-                />
+              <div className="mb-4 text-center">
+                <h1 className="text-3xl font-bold text-white">
+                  {isForgot
+                    ? "Forgot Password"
+                    : isRegister
+                    ? "Create Account"
+                    : "Login"}
+                </h1>
+
+                <p className="text-gray-200 mt-2">
+                  {isForgot
+                    ? "Reset your password using OTP"
+                    : isRegister
+                    ? `Sign-Up as ${currentRole}`
+                    : `Login as ${currentRole}`}
+                </p>
               </div>
 
-              {step === 2 && (
-                <>
+              {/* Alerts */}
+              {error && (
+                <div className="mb-4 rounded-lg bg-red-50/80 text-red-700 px-4 py-3 border border-red-200">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="mb-4 rounded-lg bg-green-50/80 text-green-800 px-4 py-3 border border-green-200">
+                  {success}
+                </div>
+              )}
+
+              {/* -----------------------
+                  Forgot Password
+                ----------------------- */}
+              {isForgot ? (
+                <form
+                  onSubmit={step === 1 ? handleSendOTP : handleResetPassword}
+                  className="space-y-4"
+                >
                   <div>
-                    <label className="block mb-2 font-semibold">Enter OTP</label>
+                    <label className="text-gray-200">Email</label>
                     <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
+                      type="email"
                       required
-                      className="border rounded-lg p-3 w-full"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-xl p-3 bg-white/10 text-white border border-white/20"
                     />
                   </div>
-                  <div>
-                    <label className="block mb-2 font-semibold">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      className="border rounded-lg p-3 w-full"
+
+                  {step === 2 && (
+                    <>
+                      <div>
+                        <label className="text-gray-200">OTP</label>
+                        <input
+                          type="text"
+                          required
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          className="w-full rounded-xl p-3 bg-white/10 text-white border border-white/20"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-gray-200">New Password</label>
+                        <input
+                          type="password"
+                          required
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="w-full rounded-xl p-3 bg-white/10 text-white border border-white/20"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="w-full rounded-xl py-2.5 bg-gradient-to-r from-green-500 to-green-400
+                      text-white font-semibold shadow-md"
+                  >
+                    {step === 1 ? "Send OTP" : "Reset Password"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsForgot(false)}
+                    className="text-sm text-green-300 underline block mx-auto mt-2"
+                  >
+                    Back to Login
+                  </button>
+                </form>
+              ) : (
+                <>
+                  {/* -----------------------
+                      Login & Register
+                    ----------------------- */}
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {isRegister && (
+                      <div>
+                        <label className="text-gray-200">Full Name</label>
+                        <input
+                          type="text"
+                          required
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="w-full rounded-xl p-3 bg-white/10 text-white border border-white/20"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-gray-200">Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full rounded-xl p-3 bg-white/10 text-white border border-white/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-gray-200">Password</label>
+                      <input
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full rounded-xl p-3 bg-white/10 text-white border border-white/20"
+                      />
+                    </div>
+                      <button
+                    type="submit"
+                    className="
+                      w-60 mx-auto flex justify-center rounded-xl py-2.5
+                      bg-[linear-gradient(to_right,#182E6F,rgba(27,60,43,0.6))]
+                      text-white font-semibold shadow-md 
+                      hover:shadow-lg hover:scale-105 transition-all duration-300
+                    "
+                  >
+                    {isRegister ? "Sign-Up" : "Sign-In"}
+                  </button>
+                  </form>
+
+                  {/* Divider */}
+                  <div className="my-4 flex items-center gap-3">
+                    <div className="flex-1 h-px bg-white/10" />
+                    <div className="text-white/70">OR</div>
+                    <div className="flex-1 h-px bg-white/10" />
+                  </div>
+
+                  {/* Google */}
+                  <div className=" w-60 mx-auto flex justify-center rounded-xl py-2.5">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
                     />
+                  </div>
+
+                  {/* Links */}
+                  <div className="text-center text-gray-200 text-sm">
+                    {isRegister ? (
+                      <>
+                        Already have an account?{" "}
+                        <button
+                          onClick={() => setIsRegister(false)}
+                          className="text-green-300 underline"
+                        >
+                          Sign-In
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        New here?{" "}
+                        <button
+                          onClick={() => setIsRegister(true)}
+                          className="text-green-300 underline"
+                        >
+                          Sign-Up
+                        </button>
+
+                        <div className="mt-2">
+                          <button
+                            onClick={() => setIsForgot(true)}
+                            className="text-xs text-white/70"
+                          >
+                            Forgot Password?
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </>
               )}
+            </div>
+          </div>
 
-              <div className="flex justify-center">
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition"
-                >
-                  {step === 1 ? "Send OTP" : "Reset Password"}
-                </button>
-              </div>
-
-              <p className="text-center mt-4">
-                <button
-                  onClick={() => {
-                    setIsForgot(false);
-                    setStep(1);
-                  }}
-                  className="text-green-600 hover:underline"
-                >
-                  Back to Login
-                </button>
-              </p>
-            </form>
-          ) : (
-            <>
-              {/* ============================== */}
-              {/* 🔹 Login / Register Form */}
-              {/* ============================== */}
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {isRegister && (
-                  <div>
-                    <label className="block mb-2 font-semibold">Full Name</label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                      className="border rounded-lg p-3 w-full"
-                    />
-                  </div>
-                )}
-                <div>
-                  <label className="block mb-2 font-semibold">Email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="border rounded-lg p-3 w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 font-semibold">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="border rounded-lg p-3 w-full"
-                  />
-                </div>
-                <div className="flex justify-center">
-                  <button
-                    type="submit"
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition"
-                  >
-                    {isRegister ? "Register" : "Login"}
-                  </button>
-                </div>
-              </form>
-
-              {/* 🔹 Footer Links */}
-              <p className="text-center mt-4">
-                {isRegister ? (
-                  <>
-                    Already have an account?{" "}
-                    <button
-                      onClick={() => setIsRegister(false)}
-                      className="text-green-600 hover:underline"
-                    >
-                      Login
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    New here?{" "}
-                    <button
-                      onClick={() => setIsRegister(true)}
-                      className="text-green-600 hover:underline"
-                    >
-                      Register
-                    </button>
-                    <br />
-                    <button
-                      onClick={() => setIsForgot(true)}
-                      className="text-sm text-gray-600 hover:text-green-600 mt-2"
-                    >
-                      Forgot Password?
-                    </button>
-                  </>
-                )}
-              </p>
-            </>
-          )}
+          <div className="mt-6 text-center text-xs text-white/100">
+            By continuing you agree to our{" "}
+            <span className="text-green-300">Terms</span> &{" "}
+            <span className="text-green-300">Privacy</span>.
+          </div>
         </div>
       </main>
+      <Footer />
     </PageContainer>
   );
 };

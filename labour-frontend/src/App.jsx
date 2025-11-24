@@ -5,6 +5,7 @@ import Login from "./pages/Auth/Login";
 import OrderList from "./pages/Labour/OrderList";
 import MyOrders from "./pages/Labour/MyOrders";
 import { Toaster } from "react-hot-toast";
+import Preloader from "./components/Preloader"; // ✅ import Preloader
 
 export const AuthContext = createContext(null);
 
@@ -15,6 +16,8 @@ const App = () => {
     loading: true,
   });
 
+  const [showPreloader, setShowPreloader] = useState(true); // ✅ Preloader state
+
   // Function to validate token on app load
   const validateToken = async () => {
     const token = localStorage.getItem("token");
@@ -24,7 +27,6 @@ const App = () => {
     }
 
     try {
-      // Optionally, you can validate the token with the backend
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/auth/verify`,
         {
@@ -45,7 +47,6 @@ const App = () => {
           loading: false,
         });
       } else {
-        // Token is invalid or expired
         localStorage.removeItem("token");
         setAuthState({ isAuthenticated: false, user: null, loading: false });
       }
@@ -57,7 +58,12 @@ const App = () => {
   };
 
   useEffect(() => {
-    validateToken();
+    // Delay validation until preloader completes
+    const timer = setTimeout(() => {
+      setShowPreloader(false);
+      validateToken();
+    }, 3500); // wait 3.5 seconds before loading app content
+    return () => clearTimeout(timer);
   }, []);
 
   const login = (userData, token) => {
@@ -80,10 +86,16 @@ const App = () => {
     });
   };
 
+  // ✅ Show Preloader first
+  if (showPreloader) {
+    return <Preloader />;
+  }
+
+  // ✅ Show loading spinner while validating token
   if (authState.loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-14 w-14 border-4 border-indigo-600 border-t-transparent"></div>
       </div>
     );
   }
@@ -107,7 +119,7 @@ const App = () => {
           }
         />
 
-        {/* Labour Navbar Routes */}
+        {/* Labour Dashboard Routes */}
         <Route
           path="/labour-dashboard/*"
           element={
@@ -128,12 +140,12 @@ const App = () => {
         <Route
           path="*"
           element={
-            <div className="min-h-screen flex flex-col items-center justify-center">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
               <h1 className="text-6xl font-bold text-gray-900">404</h1>
               <p className="mt-4 text-xl text-gray-600">Page Not Found</p>
               <button
                 onClick={() => (window.location.href = "/login")}
-                className="mt-8 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                className="mt-8 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
               >
                 Back to Login
               </button>
