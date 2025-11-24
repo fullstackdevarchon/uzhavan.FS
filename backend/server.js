@@ -20,6 +20,9 @@ import labourRoutes from "./routes/labourRoutes.js";
 import forgotRoutes from "./routes/forgotRoutes.js";
 import pushRoutes from "./routes/notificationRoutes.js";
 
+// ✅ ADDED FOR GOOGLE LOGIN
+import googleRoutes from "./routes/google.routes.js";
+
 // ======== CONFIG =========
 dotenv.config();
 const app = express();
@@ -51,7 +54,10 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/labours", labourRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/forgot", forgotRoutes);
-app.use("/api/notifications", pushRoutes); // ✅ Web Push route
+app.use("/api/notifications", pushRoutes); // Web Push route
+
+// ✅ ADDED GOOGLE LOGIN ROUTE
+app.use("/api/auth/google", googleRoutes);
 
 // ======== DATABASE CONNECT =========
 mongoose
@@ -93,7 +99,7 @@ webpush.setVapidDetails(
 io.on("connection", (socket) => {
   console.log("⚡ Client connected:", socket.id);
 
-  // Join a specific room based on role or id
+  // Join room
   socket.on("joinRoom", ({ id, role }) => {
     if (role === "admin") {
       socket.join("admin");
@@ -104,18 +110,18 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Send notification both realtime and as push
+  // Send notification
   socket.on("sendNotification", async (data) => {
     console.log("📨 Notification received:", data);
 
     const { role, title, message } = data;
     const payload = JSON.stringify({ title, body: message });
 
-    // ✅ Real-time via Socket.IO
+    // Real-time via Socket.IO
     if (role === "admin") io.to("admin").emit("receiveNotification", data);
     else io.to(role).emit("receiveNotification", data);
 
-    // ✅ Web Push
+    // Web Push
     try {
       const { default: Subscription } = await import("./models/Subscription.js");
       const subs = await Subscription.find({ role });

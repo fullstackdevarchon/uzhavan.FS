@@ -1,109 +1,152 @@
 import React from "react";
 import PageContainer from "../components/PageContainer";
-import { Mail, Phone, MapPin } from "lucide-react"; // icons
+import { Mail, Phone, MapPin } from "lucide-react";
+import Footer from "../components/Footer";
 
 const ContactPage = () => {
   return (
     <PageContainer>
       <main>
-        <section className="container mx-auto px-6 py-20">
-          {/* Heading */}
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h1 className="text-5xl font-extrabold mb-4 text-gray-900 tracking-tight">
-              Contact Us
-            </h1>
-            <hr className="border-gray-300 w-24 mx-auto mb-6" />
-            <p className="text-gray-600 text-lg">
-              We’d love to hear from you. Reach out with any questions, feedback, or just to say hello.
-            </p>
-          </div>
+        <section className="relative w-full min-h-screen flex items-start py-12">
 
-          {/* Content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto">
-            {/* Contact Info Card */}
-            <div className="bg-white/80 backdrop-blur-lg shadow-2xl rounded-2xl p-10 flex flex-col justify-center space-y-8 border border-gray-200">
-              <div className="flex items-center space-x-5">
-                <div className="p-4 bg-indigo-600 text-white rounded-full shadow-md">
-                  <MapPin className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-gray-900">Our Office</h3>
-                  <p className="text-gray-600">123 Market Street, New York, USA</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-5">
-                <div className="p-4 bg-indigo-600 text-white rounded-full shadow-md">
-                  <Phone className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-gray-900">Phone</h3>
-                  <p className="text-gray-600">+1 (555) 123-4567</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-5">
-                <div className="p-4 bg-indigo-600 text-white rounded-full shadow-md">
-                  <Mail className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg text-gray-900">Email</h3>
-                  <p className="text-gray-600">support@example.com</p>
-                </div>
-              </div>
+          <div className="max-w-5xl mx-auto px-4 relative z-10 w-full">
+            
+            {/* Heading */}
+            <div className="text-center mb-10">
+              <h1 className="text-4xl font-extrabold mb-2 text-white drop-shadow-lg">
+                Contact Us
+              </h1>
+              <p className="text-gray-200 text-lg max-w-xl mx-auto">
+                Reach out to us anytime. We're here to assist you.
+              </p>
             </div>
 
-            {/* Contact Form */}
-            <form className="bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-10 space-y-6 border border-gray-200">
-              <div className="flex flex-col">
-                <label htmlFor="Name" className="mb-2 font-semibold text-gray-800">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="Name"
-                  placeholder="Enter your name"
-                  className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
-                />
-              </div>
+            {/* GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch w-full">
 
-              <div className="flex flex-col">
-                <label htmlFor="Email" className="mb-2 font-semibold text-gray-800">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="Email"
-                  placeholder="name@example.com"
-                  className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600"
-                />
-              </div>
+              {/* LEFT – FORM */}
+              <form className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 
+                  border border-white/30 shadow-xl 
+                  flex flex-col justify-between
+                  h-full">
 
-              <div className="flex flex-col">
-                <label htmlFor="Message" className="mb-2 font-semibold text-gray-800">
-                  Message
-                </label>
-                <textarea
-                  id="Message"
-                  rows={5}
-                  placeholder="Enter your message"
-                  className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 resize-none"
-                />
-              </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-6">
+                    Send a Message
+                  </h2>
 
-              <div className="flex justify-center">
+                  <div className="space-y-5">
+                    {/* Name */}
+                    <div>
+                      <label className="block text-md font-semibold text-white mb-1">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter your name"
+                        className="rounded-lg p-3 bg-white/70 border border-gray-300 
+                        focus:ring-4 focus:ring-indigo-400 outline-none w-full"
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className="block text-md font-semibold text-white mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="name@example.com"
+                        className="rounded-lg p-3 bg-white/70 border border-gray-300 
+                        focus:ring-4 focus:ring-indigo-400 outline-none w-full"
+                      />
+                    </div>
+
+                    {/* Message */}
+                    <div>
+                      <label className="block text-md font-semibold text-white mb-1">
+                        Message
+                      </label>
+                      <textarea
+                        rows={4}
+                        placeholder="Enter your message"
+                        className="rounded-lg p-3 bg-white/70 border border-gray-300 
+                        focus:ring-4 focus:ring-indigo-400 outline-none 
+                        resize-none w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Button */}
                 <button
                   type="submit"
                   disabled
-                  className="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="mt-6 w-full py-3 text-md font-semibold rounded-lg 
+                  text-white shadow-lg disabled:opacity-100 
+                  bg-[linear-gradient(to_right,#182E6F,rgba(27,60,43,0.6))]"
                 >
                   Send Message
                 </button>
+
+              </form>
+
+              {/* RIGHT – CONTACT INFO */}
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 
+                  border border-white/20 shadow-xl 
+                  flex flex-col justify-center 
+                  h-[360px]">
+
+                <h2 className="text-2xl font-bold text-white mb-6">
+                  Our Contact Info
+                </h2>
+
+                <div className="space-y-8">
+
+                  {/* Office */}
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-white/20 rounded-xl shadow-md">
+                      <MapPin className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Office Location</h3>
+                      <p className="text-gray-200 text-sm">
+                        Terravale Ventures LLP <br />
+                        Idukki, Kerala, India
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-white/20 rounded-xl shadow-md">
+                      <Phone className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Phone</h3>
+                      <p className="text-gray-200 text-sm">+91 98765 43210</p>
+                    </div>
+                  </div>
+
+                  {/* Email */}
+                  <div className="flex items-center gap-4">
+                    <div className="p-4 bg-white/20 rounded-xl shadow-md">
+                      <Mail className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Email</h3>
+                      <p className="text-gray-200 text-sm">support@terravale.com</p>
+                    </div>
+                  </div>
+
+                </div>
               </div>
-            </form>
+
+            </div>
           </div>
         </section>
       </main>
+      <Footer />
     </PageContainer>
   );
 };

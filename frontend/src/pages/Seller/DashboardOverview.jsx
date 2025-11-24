@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { FaPlusCircle, FaBoxOpen, FaClipboardCheck, FaChartLine } from "react-icons/fa";
+import {
+  FaPlusCircle,
+  FaBoxOpen,
+  FaClipboardCheck,
+  FaChartLine,
+} from "react-icons/fa";
 import { io } from "socket.io-client";
 import PageContainer from "../../components/PageContainer";
+import Preloader from "../../components/Preloader";
 
-// ✅ Connect to Socket.IO backend
-const socket = io("http://localhost:5000"); // your backend URL
+// Socket
+const socket = io("http://localhost:5000");
 
 const DashboardOverview = () => {
   const [stats, setStats] = useState({
@@ -17,17 +23,16 @@ const DashboardOverview = () => {
   });
 
   const [recentProducts, setRecentProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch products and setup socket
   useEffect(() => {
-    const sellerId = localStorage.getItem("userId"); // store seller id on login
+    const sellerId = localStorage.getItem("userId");
+
     if (sellerId) {
       socket.emit("joinRoom", { id: sellerId, role: "seller" });
-      console.log("🟢 Joined seller room:", sellerId);
 
       socket.on("receiveNotification", (data) => {
         toast.success(`${data.title}: ${data.message}`);
-        console.log("🔔 Notification received:", data);
       });
     }
 
@@ -38,193 +43,269 @@ const DashboardOverview = () => {
     };
   }, []);
 
+  // Fetch Stats
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
-        "http://localhost:5000/api/v1/products/seller",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await fetch("http://localhost:5000/api/v1/products/seller", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.ok) {
-        const data = await response.json();
-        const products = data.products || [];
+      if (!res.ok) return toast.error("Failed to load dashboard data");
 
-        let totalSold = 0;
-        let revenue = 0;
-        products.forEach((product) => {
-          totalSold += product.sold || 0;
-          revenue += (product.sold || 0) * (product.price || 0);
-        });
+      const data = await res.json();
+      const products = data.products || [];
 
-        setStats({
-          totalProducts: products.length,
-          pendingOrders: 5, // Replace with API if available
-          totalSales: totalSold,
-          revenue: revenue,
-        });
+      let totalSold = 0;
+      let revenue = 0;
 
-        setRecentProducts(products.slice(0, 3));
-      } else {
-        console.error("Failed to fetch products:", response.status);
-        toast.error("Failed to load dashboard data");
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      products.forEach((p) => {
+        totalSold += p.sold || 0;
+        revenue += (p.sold || 0) * (p.price || 0);
+      });
+
+      setStats({
+        totalProducts: products.length,
+        pendingOrders: 5,
+        totalSales: totalSold,
+        revenue,
+      });
+
+      setRecentProducts(products.slice(0, 3));
+    } catch (err) {
       toast.error("Error fetching dashboard data");
+    } finally {
+      setTimeout(() => setLoading(false), 1200);
     }
   };
 
+  // Stat Card
   const StatCard = ({ icon, title, value, color, link }) => (
     <Link
       to={link}
-      className={`bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow ${color}`}
+      className="
+        backdrop-blur-xl bg-white/10 border border-white/20 
+        text-white rounded-2xl p-6 shadow-2xl transition-all
+        hover:scale-105 hover:bg-white/20 hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]
+      "
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-600 text-sm font-medium">{title}</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{value}</p>
+          <p className="text-white/80 text-sm font-medium">{title}</p>
+          <p className="text-3xl font-bold mt-1">{value}</p>
         </div>
-        <div className={`text-3xl ${color.replace("border-l-4", "text")}`}>
-          {icon}
-        </div>
+        <div className={`text-4xl ${color}`}>{icon}</div>
       </div>
     </Link>
   );
 
+  if (loading) return <Preloader />;
+
   return (
     <PageContainer>
-      <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg p-6">
-        <h1 className="text-3xl font-bold mb-2">Welcome to Your Dashboard! 🌾</h1>
-        <p className="text-orange-100">
-          Manage your products and track your sales performance
-        </p>
-      </div>
+      <div
+        className="
+          min-h-screen p-6 
+          bg-fixed bg-cover bg-center 
+        "
+        // style={{
+        //   backgroundImage: "url('/assets/IMG-20251013-WA0000.jpg')",
+        // }}
+      >
+        <div className="space-y-10">
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          icon={<FaBoxOpen />}
-          title="Total Products"
-          value={stats.totalProducts}
-          color="border-l-4 border-blue-500 text-blue-500"
-          link="/seller/my-products"
-        />
-        <StatCard
-          icon={<FaClipboardCheck />}
-          title="Pending Orders"
-          value={stats.pendingOrders}
-          color="border-l-4 border-yellow-500 text-yellow-500"
-          link="/seller/check-status"
-        />
-        <StatCard
-          icon={<FaChartLine />}
-          title="Total Sales"
-          value={stats.totalSales}
-          color="border-l-4 border-green-500 text-green-500"
-          link="/seller/check-status"
-        />
-        <StatCard
-          icon={<FaChartLine />}
-          title="Revenue"
-          value={`₹${stats.revenue}`}
-          color="border-l-4 border-purple-500 text-purple-500"
-          link="/seller/check-status"
-        />
-      </div>
+          {/* WELCOME SECTION */}
+          <div
+            className="
+              backdrop-blur-xl bg-white/10 border border-white/20
+              text-white rounded-2xl p-10 shadow-2xl
+              hover:bg-white/20 transition-all hover:shadow-[0_0_25px_rgba(255,255,255,0.3)]
+            "
+          >
+            <h1 className="text-4xl font-extrabold mb-2">
+              Welcome to Your Dashboard! 🌾
+            </h1>
+            <p className="text-white/80 text-lg">
+              Manage your products and track your sales performance.
+            </p>
+          </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link
-            to="/seller/add-product"
-            className="flex items-center justify-center space-x-3 bg-blue-500 text-white p-4 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            <FaPlusCircle className="text-xl" />
-            <span className="font-semibold">Add New Product</span>
-          </Link>
-          <Link
-            to="/seller/my-products"
-            className="flex items-center justify-center space-x-3 bg-green-500 text-white p-4 rounded-lg hover:bg-green-600 transition-colors"
-          >
-            <FaBoxOpen className="text-xl" />
-            <span className="font-semibold">View My Products</span>
-          </Link>
-          <Link
-            to="/seller/check-status"
-            className="flex items-center justify-center space-x-3 bg-orange-500 text-white p-4 rounded-lg hover:bg-orange-600 transition-colors"
-          >
-            <FaClipboardCheck className="text-xl" />
-            <span className="font-semibold">Check Status</span>
-          </Link>
-        </div>
-      </div>
+          {/* STATS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              icon={<FaBoxOpen />}
+              title="Total Products"
+              value={stats.totalProducts}
+              color="text-blue-300"
+              link="/seller/my-products"
+            />
 
-      {/* Recent Products */}
-      {recentProducts.length > 0 ? (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Recent Products</h2>
-            <Link
-              to="/seller/my-products"
-              className="text-blue-500 hover:text-blue-600 font-medium"
+            <StatCard
+              icon={<FaClipboardCheck />}
+              title="Pending Orders"
+              value={stats.pendingOrders}
+              color="text-yellow-300"
+              link="/seller/check-status"
+            />
+
+            <StatCard
+              icon={<FaChartLine />}
+              title="Total Sales"
+              value={stats.totalSales}
+              color="text-green-300"
+              link="/seller/check-status"
+            />
+
+            <StatCard
+              icon={<FaChartLine />}
+              title="Revenue"
+              value={`₹${stats.revenue}`}
+              color="text-purple-300"
+              link="/seller/check-status"
+            />
+          </div>
+
+          {/* QUICK ACTIONS */}
+          <div
+            className="
+              backdrop-blur-xl bg-white/10 border border-white/20 
+              text-white rounded-2xl p-6 shadow-2xl
+            "
+          >
+            <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              <Link
+                to="/seller/add-product"
+                className="
+                  flex items-center justify-center gap-3
+                  backdrop-blur-xl bg-blue-600/40 border border-blue-300/30
+                  text-white p-4 rounded-xl font-semibold
+                  hover:bg-blue-600/60 hover:scale-105 transition-all
+                "
+              >
+                <FaPlusCircle className="text-xl" /> Add New Product
+              </Link>
+
+              <Link
+                to="/seller/my-products"
+                className="
+                  flex items-center justify-center gap-3
+                  backdrop-blur-xl bg-green-600/40 border border-green-300/30
+                  text-white p-4 rounded-xl font-semibold
+                  hover:bg-green-600/60 hover:scale-105 transition-all
+                "
+              >
+                <FaBoxOpen className="text-xl" /> View My Products
+              </Link>
+
+              <Link
+                to="/seller/check-status"
+                className="
+                  flex items-center justify-center gap-3
+                  backdrop-blur-xl bg-orange-600/40 border border-orange-300/30
+                  text-white p-4 rounded-xl font-semibold
+                  hover:bg-orange-600/60 hover:scale-105 transition-all
+                "
+              >
+                <FaClipboardCheck className="text-xl" /> Check Status
+              </Link>
+
+            </div>
+          </div>
+
+          {/* RECENT PRODUCTS */}
+          {recentProducts.length > 0 ? (
+            <div
+              className="
+                backdrop-blur-xl bg-white/10 border border-white/20 
+                text-white rounded-2xl p-6 shadow-2xl
+              "
             >
-              View All →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recentProducts.map((product) => (
-              <div key={product._id} className="border rounded-lg overflow-hidden">
-                <div className="h-32 bg-gray-200 flex items-center justify-center">
-                  {product.image?.url ? (
-                    <img
-                      src={product.image.url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-2xl">📦</span>
-                  )}
-                </div>
-                <div className="p-3">
-                  <h3 className="font-semibold text-gray-800 truncate">{product.name}</h3>
-                  <p className="text-green-600 font-bold">₹{product.price}</p>
-                  <p className="text-gray-500 text-sm">
-                    {product.category
-                      ? typeof product.category === "string"
-                        ? product.category
-                        : product.category.name || "Uncategorized"
-                      : "Uncategorized"}
-                  </p>
-                </div>
+              <div className="flex justify-between mb-4">
+                <h2 className="text-2xl font-bold">Recent Products</h2>
+
+                <Link
+                  to="/seller/my-products"
+                  className="text-blue-300 hover:text-blue-400 font-semibold"
+                >
+                  View All →
+                </Link>
               </div>
-            ))}
-          </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recentProducts.map((product) => (
+                  <div
+                    key={product._id}
+                    className="
+                      backdrop-blur-xl bg-white/10 border border-white/20
+                      rounded-xl overflow-hidden shadow-xl
+                      hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]
+                      transition-all
+                    "
+                  >
+                    {/* IMAGE */}
+                    <div className="h-40 bg-black/20 flex items-center justify-center">
+                      {product.image?.url ? (
+                        <img
+                          src={product.image.url}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white/60 text-4xl">📦</span>
+                      )}
+                    </div>
+
+                    {/* DETAILS */}
+                    <div className="p-4">
+                      <h3 className="font-semibold text-white truncate">
+                        {product.name}
+                      </h3>
+
+                      <p className="text-green-300 font-bold">
+                        ₹{product.price}
+                      </p>
+
+                      <p className="text-white/70 text-sm">
+                        {product?.category?.name || "Uncategorized"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div
+              className="
+                backdrop-blur-xl bg-white/10 border border-white/20 
+                text-white rounded-2xl p-10 shadow-xl text-center
+              "
+            >
+              <div className="text-white/40 text-6xl mb-4">📦</div>
+              <h3 className="text-2xl font-bold mb-2">No Products Yet</h3>
+              <p className="text-white/70 mb-6">
+                Add your first product to get started.
+              </p>
+
+              <Link
+                to="/seller/add-product"
+                className="
+                  backdrop-blur-xl bg-orange-600/40 border border-orange-300/30
+                  text-white px-6 py-3 rounded-xl font-semibold
+                  hover:bg-orange-600/60 hover:scale-105 transition-all
+                "
+              >
+                <FaPlusCircle className="inline mr-2" />
+                Add Your First Product
+              </Link>
+            </div>
+          )}
         </div>
-      ) : (
-        // Empty State
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-          <div className="text-gray-400 text-6xl mb-4">📦</div>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">No Products Yet</h3>
-          <p className="text-gray-500 mb-6">Start your selling journey by adding your first product</p>
-          <Link
-            to="/seller/add-product"
-            className="inline-flex items-center space-x-2 bg-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
-          >
-            <FaPlusCircle />
-            <span>Add Your First Product</span>
-          </Link>
-        </div>
-      )}
       </div>
     </PageContainer>
   );

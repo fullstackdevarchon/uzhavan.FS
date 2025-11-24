@@ -1,41 +1,41 @@
 [
   {
     "id": 1,
-    "title": "Catch Red Chilli Powder",
+    "title": "Red Chilli Powder",
     "price": 109.95,
     "description": "Catch Red Chilli Powder is a premium quality powdered spice, a staple in Indian cuisine, known for adding vibrant color, spice, and punch to curries, gravies, and pickles.",
     "category": "spices",
-    "image": "https://catchfoods.com/wp-content/uploads/2023/07/Catch-Spices-Red-Chilli-Powder.webp",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTXsqYRALnXHuWaDzKAHjH1_-mM9MxvkQEe6Q&s",
     "rating": { "rate": 3.9, "count": 120 },
     "weight": "200g"
   },
   {
     "id": 2,
-    "title": "Catch Coriander Powder",
+    "title": "Coriander Powder",
     "price": 22.3,
     "description": "Catch Coriander Powder is known for its distinct aroma and flavor. It is widely used in Indian curries, chutneys, and masalas to enhance taste.",
     "category": "spices",
-    "image": "https://m.media-amazon.com/images/I/7154zLsH36L.jpg",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQT30jTBHP-OCBlKwdHxp2ecctPm6DApEp-yA&s",
     "rating": { "rate": 4.1, "count": 259 },
     "weight": "200g"
   },
   {
     "id": 3,
-    "title": "Catch Turmeric Powder",
+    "title": "Turmeric Powder",
     "price": 35.5,
     "description": "Catch Turmeric Powder is made from the finest turmeric roots, offering a natural yellow color and earthy flavor. It is essential for curries and has medicinal benefits.",
     "category": "spices",
-    "image": "https://www.bbassets.com/media/uploads/p/xl/30006777_6-catch-turmeric-powder.jpg",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQMH8pzrt8tz9Ol3kvqXq2-D7o_UMtoaswFeg&s",
     "rating": { "rate": 4.5, "count": 310 },
     "weight": "200g"
   },
   {
     "id": 4,
-    "title": "Catch Black Pepper Powder",
+    "title": "Black Pepper Powder",
     "price": 50,
     "description": "Catch Black Pepper Powder adds a sharp, spicy flavor to soups, salads, curries, and marinades. It is sourced from the best pepper-growing regions of India.",
     "category": "spices",
-    "image": "https://rclub.in/cdn/shop/files/Black_Pepper_Powder_3D_Pack_100gm_Front.png?v=1743773206",
+    "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTr4Qz_jXG3wmmUkJhIYyxqsNdAmnLv8yPqEQ&s",
     "rating": { "rate": 4.3, "count": 200 },
     "weight": "200g"
   },

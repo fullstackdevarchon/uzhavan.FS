@@ -15,6 +15,8 @@ import {
   FaShippingFast,
   FaClock,
 } from "react-icons/fa";
+import PageContainer from "../../components/PageContainer";
+import Preloader from "../../components/Preloader"; // Assuming Preloader is available and correct
 
 const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSummary = false }) => {
   const [orders, setOrders] = useState([]);
@@ -69,7 +71,7 @@ const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSum
       setUpdating({ [orderId]: { action: "assign" } });
       const token = localStorage.getItem("token");
       // console.debug(" assign:start orderId=", orderId);
-  
+
       await axios.post(
         `${API_BASE}/api/labours/orders/${orderId}/assign`,
         {},
@@ -100,7 +102,7 @@ const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSum
       // console.debug(" assign:end orderId=", orderId);
     }
   };
-  
+
 
   // Update order status
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -370,31 +372,35 @@ const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSum
     }
   }, [orders, mode, hideDeliveredDefault, myUserId, filter]);
 
-  // Loading spinner
+  // Loading spinner conditional return
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
-      </div>
-    );
+    // This assumes the Preloader component exists and is a full-page loading screen
+    return <Preloader />;
+    // If Preloader is not desired, the simple spinner you commented out is an option:
+    // return (
+    //   <div className="flex items-center justify-center min-h-screen">
+    //     <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+    //   </div>
+    // );
   }
 
   return (
+    <PageContainer>
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+        <h1 className="text-3xl font-bold text-gray-100 flex items-center gap-2">
           {mode === 'take' ? (
             <>
               <FaBoxOpen className="text-green-600" /> Take Orders
             </>
           ) : (
             <>
-              <FaClipboardList className="text-green-600" /> Order Management
+              <FaClipboardList className="text-gray-100" /> Order Management
             </>
           )}
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-200 mt-2">
           {mode === 'take' ? 'Browse available orders and take one to work on' : 'Manage and track your assigned orders'}
         </p>
         {showFinishedSummary && mode === "mine" && (
@@ -408,7 +414,7 @@ const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSum
 
       {/* Filter Tabs */}
       <div className="mb-6">
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-100">
           <nav className="-mb-px flex flex-wrap gap-4">
             {(mode === 'take'
               ? [
@@ -428,14 +434,14 @@ const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSum
                 onClick={() => setFilter(tab.key)}
                 className={`py-2 px-2 border-b-2 font-medium text-sm flex items-center gap-2 transition ${
                   filter === tab.key
-                    ? "border-green-600 text-green-700"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-blue-900 text-blue-400"
+                    : "border-transparent text-gray-100 hover:text-gray-100 hover:border-gray-100"
                 }`}
                 title={`Show ${tab.label} orders`}
               >
                 <span className="text-base">{tab.icon}</span>
                 <span className="capitalize">{tab.label}</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-100">
                   (
                   {
                     tab.key === "all"
@@ -456,30 +462,30 @@ const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSum
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {filteredOrders.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-100">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                     Order Details
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                     Delivery Address
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-100">
                 {filteredOrders.map((order) => (
                   <>
                     <tr key={order._id} className="hover:bg-gray-50 transition-colors">
@@ -654,6 +660,7 @@ const OrderList = ({ mode = "all", hideDeliveredDefault = false, showFinishedSum
         )}
       </div>
     </div>
+    </PageContainer>
   );
 };
 

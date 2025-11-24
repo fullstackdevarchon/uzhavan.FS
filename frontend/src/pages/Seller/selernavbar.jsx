@@ -1,11 +1,13 @@
 // src/components/SellerNavbar.jsx
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
 import {
   FaPlusCircle,
   FaClipboardCheck,
   FaBoxOpen,
   FaSignOutAlt,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
 import { logout, getCurrentUser } from "../../utils/auth";
 
@@ -13,105 +15,157 @@ const SellerNavbar = () => {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
 
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // CLOSE MENU ON OUTSIDE CLICK
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleLogout = () => {
-    console.log("🔓 Seller logout initiated");
-    logout(); // This will clear all auth data and redirect
+    logout();
   };
 
-  const navLinkClass = ({ isActive }) =>
-    `relative px-2 pb-1 transition-colors duration-300 border-b-2 ${
+  // ACTIVE NAV CLASS
+  const navItemClass = ({ isActive }) =>
+    `px-4 py-2 rounded-lg transition font-semibold text-[17px] ${
       isActive
-        ? "text-yellow-400 font-semibold border-yellow-400"
-        : "text-white hover:text-yellow-300 border-transparent"
+        ? "bg-[rgba(27,60,43,0.85)] border border-white/40 text-yellow-300"
+        : "text-white hover:bg-[rgba(27,60,43,0.7)]"
     }`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Navbar */}
-      <nav className="bg-orange-600 shadow-2xl fixed top-0 w-full z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between">
-          {/* Left: Logo + Title clickable */}
-          <Link
-            to="/seller"
-            className="flex items-center gap-3 w-full md:w-auto mb-3 md:mb-0 justify-center md:justify-start"
-          >
-            <img
-              src="/assets/logo.png"
-              alt="Logo"
-              className="h-12 w-12 rounded-full shadow-xl border-2 border-white object-cover"
-            />
-            <h1 className="text-xl md:text-3xl font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-white drop-shadow-lg whitespace-nowrap">
-              Seller Dashboard
-            </h1>
-          </Link>
+    <div className="min-h-screen flex flex-col">
+      {/* NAVBAR */}
+      <nav
+        className="
+          fixed top-0 left-0 w-full z-50 bg-cover bg-center bg-fixed bg-no-repeat
+          shadow-lg border-b border-white/10
+        "
+        style={{
+          backgroundImage: `url('/assets/IMG-20251013-WA0000.jpg')`,
+        }}
+      >
+        <div className="bg-[rgba(0,0,0,0.55)]">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            {/* LOGO + TITLE */}
+            <Link to="/seller" className="flex items-center gap-4">
+              <img
+                src="/assets/IMG-20251006-WA0016(1) (1).jpg"
+                alt="Seller Logo"
+                className="h-14 w-14 rounded-full border border-black shadow-lg object-cover"
+              />
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex gap-6 font-medium text-white">
-            <NavLink
-              to="/seller/add-product"
-              className={navLinkClass}
-            >
-              <FaPlusCircle className="inline mr-1" /> Add Product
-            </NavLink>
+              <div>
+                <h1 className="text-white font-extrabold text-2xl tracking-wide">
+                  Seller Dashboard
+                </h1>
 
-            <NavLink
-              to="/seller/my-products"
-              className={navLinkClass}
-            >
-              <FaBoxOpen className="inline mr-1" /> My Products
-            </NavLink>
+                {/* UNDERLINE BAR (MATCHING BUYER STYLE BUT ORANGE THEME) */}
+                <div className="w-56 h-[3px] bg-[rgba(27,60,43,0.7)] mt-1 rounded-full"></div>
+              </div>
+            </Link>
 
-            <NavLink
-              to="/seller/check-status"
-              className={navLinkClass}
-            >
-              <FaClipboardCheck className="inline mr-1" /> Check Status
-            </NavLink>
+            {/* DESKTOP MENU */}
+            <div className="hidden md:flex items-center gap-8">
+              <NavLink to="/seller/add-product" className={navItemClass}>
+                <span className="inline-flex items-center gap-2">
+                  <FaPlusCircle /> Add Product
+                </span>
+              </NavLink>
 
+              <NavLink to="/seller/my-products" className={navItemClass}>
+                <span className="inline-flex items-center gap-2">
+                  <FaBoxOpen /> My Products
+                </span>
+              </NavLink>
+
+              <NavLink to="/seller/check-status" className={navItemClass}>
+                <span className="inline-flex items-center gap-2">
+                  <FaClipboardCheck /> Check Status
+                </span>
+              </NavLink>
+
+              {/* LOGOUT BUTTON */}
+              <button
+                onClick={handleLogout}
+                className="
+                  text-red-300 hover:text-red-200 
+                  font-semibold flex items-center gap-2 px-4 py-2 
+                  bg-white/10 border border-white/30 rounded-lg 
+                  hover:bg-red-800/40 transition
+                "
+              >
+                <FaSignOutAlt /> Logout
+              </button>
+            </div>
+
+            {/* MOBILE MENU TOGGLE */}
             <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 text-red-100 hover:text-red-900 font-semibold transition-colors focus:outline-none"
+              onClick={() => setIsOpen(!isOpen)}
+              className="md:hidden text-white text-3xl"
             >
-              <FaSignOutAlt /> Logout
-            </button>
-          </div>
-
-          {/* Mobile Nav (horizontal buttons) */}
-          <div className="flex md:hidden justify-around w-full mt-3 border-t border-white/20 pt-2">
-            <NavLink
-              to="/seller/add-product"
-              className={navLinkClass}
-            >
-              <FaPlusCircle className="inline mr-1" /> Add
-            </NavLink>
-
-            <NavLink
-              to="/seller/my-products"
-              className={navLinkClass}
-            >
-              <FaBoxOpen className="inline mr-1" /> My
-            </NavLink>
-
-            <NavLink
-              to="/seller/check-status"
-              className={navLinkClass}
-            >
-              <FaClipboardCheck className="inline mr-1" /> Status
-            </NavLink>
-
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1 text-red-200 hover:text-red-100 font-semibold border-b-2 border-transparent hover:border-red-300 transition"
-            >
-              <FaSignOutAlt /> Logout
+              {isOpen ? <FaTimes /> : <FaBars />}
             </button>
           </div>
         </div>
+
+        {/* MOBILE MENU */}
+        {isOpen && (
+          <div
+            ref={dropdownRef}
+            className="
+              md:hidden bg-[rgba(0,0,0,0.55)] backdrop-blur-md 
+              px-6 py-4 space-y-4 text-white animate-fadeIn border-t border-white/20
+            "
+          >
+            <NavLink
+              to="/seller/add-product"
+              className="block py-3 border-b border-white/20"
+              onClick={() => setIsOpen(false)}
+            >
+              <FaPlusCircle className="inline mr-3" /> Add Product
+            </NavLink>
+
+            <NavLink
+              to="/seller/my-products"
+              className="block py-3 border-b border-white/20"
+              onClick={() => setIsOpen(false)}
+            >
+              <FaBoxOpen className="inline mr-3" /> My Products
+            </NavLink>
+
+            <NavLink
+              to="/seller/check-status"
+              className="block py-3 border-b border-white/20"
+              onClick={() => setIsOpen(false)}
+            >
+              <FaClipboardCheck className="inline mr-3" /> Check Status
+            </NavLink>
+
+            <button
+              onClick={() => {
+                handleLogout();
+                setIsOpen(false);
+              }}
+              className="block py-3 w-full text-left text-red-300 font-semibold"
+            >
+              <FaSignOutAlt className="inline mr-3" /> Logout
+            </button>
+          </div>
+        )}
       </nav>
 
-      {/* Content Area (with padding for fixed navbar) */}
-      <main className="flex-1 p-6 bg-gray-50 mt-32 md:mt-20">
-        <Outlet /> {/* Nested seller routes will render here */}
+      {/* CONTENT AREA */}
+      <main className="flex-1 p-6 mt-24 bg-gray-50">
+        <Outlet />
       </main>
     </div>
   );

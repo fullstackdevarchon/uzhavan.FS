@@ -74,7 +74,7 @@ const AdminNavbar = () => {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Fixed Top Navbar */}
-      <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-lg px-6 py-4 flex items-center justify-between z-50">
+      <nav className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 shadow-lg px-6 py-4 flex items-center justify-between z-50">
         <LogoSection />
 
         {/* Desktop Links */}

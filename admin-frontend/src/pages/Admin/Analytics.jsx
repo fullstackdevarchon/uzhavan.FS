@@ -14,21 +14,21 @@ import {
 } from "recharts";
 import { FaChartPie, FaBoxOpen } from "react-icons/fa";
 import PageContainer from "../../components/PageContainer";
+import Preloader from "../../components/Preloader";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A020F0"];
 
 const Analytics = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
+  const [loading, setLoading] = useState(true); // ✅ Added loading state
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const { data } = await axios.get(
           "http://localhost:5000/api/v1/orders/admin/all",
-          {
-            withCredentials: true,
-          }
+          { withCredentials: true }
         );
 
         if (data.success && data.orders) {
@@ -78,17 +78,24 @@ const Analytics = () => {
         }
       } catch (err) {
         console.error("❌ Analytics fetch error:", err);
+      } finally {
+        setLoading(false); // ✅ Stop loading after fetch
       }
     };
 
     fetchOrders();
   }, []);
 
+  // // ✅ Show preloader while fetching
+  // if (loading) {
+  //   return <Preloader />;
+  // }
+
   return (
     <PageContainer>
       <div className="max-w-7xl w-full mx-auto">
         {/* Header */}
-        <h2 className="text-4xl font-extrabold mb-10 text-center text-indigo-300 tracking-wide drop-shadow-sm">
+        <h2 className="text-4xl font-extrabold mb-10 text-center text-indigo-100 tracking-wide drop-shadow-sm">
           📊 Analytics Dashboard
         </h2>
 

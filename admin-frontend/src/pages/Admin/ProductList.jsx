@@ -1,4 +1,3 @@
-// src/pages/Admin/ProductListAdmin.jsx
 import React, { useState, useEffect, useRef } from "react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -6,25 +5,33 @@ import { FaTrash, FaChevronDown } from "react-icons/fa";
 import axios from "axios";
 import toast from "react-hot-toast";
 import PageContainer from "../../components/PageContainer";
+import Preloader from "../../components/Preloader";
 
 const ProductListAdmin = () => {
   const [data, setData] = useState([]);
   const [filter, setFilter] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPreloader, setShowPreloader] = useState(true);
   const [category, setCategory] = useState("All");
   const [categories, setCategories] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
   const dropdownRef = useRef(null);
 
-  // ✅ Fetch products from backend (only approved)
+  // ✅ Show Preloader for 2 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowPreloader(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ✅ Fetch products (only approved)
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const { data } = await axios.get("http://localhost:5000/api/v1/products/all", {
         withCredentials: true,
       });
-
       if (data.success) {
         const approved = data.products.filter((p) => p.status === "approved");
         setData(approved);
@@ -37,13 +44,12 @@ const ProductListAdmin = () => {
     }
   };
 
-  // ✅ Fetch categories (enabled only)
+  // ✅ Fetch enabled categories
   const fetchCategories = async () => {
     try {
       const { data } = await axios.get("http://localhost:5000/api/v1/categories/all", {
         withCredentials: true,
       });
-
       if (data.success) {
         const enabled = data.categories.filter((c) => c.enabled);
         setCategories(enabled);
@@ -73,7 +79,6 @@ const ProductListAdmin = () => {
   const filterProduct = (catId, catName) => {
     setCategory(catName);
     setDropdownOpen(false);
-
     if (catName === "All") {
       setFilter(data);
     } else {
@@ -81,25 +86,20 @@ const ProductListAdmin = () => {
     }
   };
 
-  // ✅ Delete product (backend + state update)
+  // ✅ Delete product
   const deleteProduct = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         await axios.delete(`http://localhost:5000/api/v1/products/${id}`, {
           withCredentials: true,
         });
-
         const updatedData = data.filter((item) => item._id !== id);
         setData(updatedData);
-
-        if (category === "All") {
-          setFilter(updatedData);
-        } else {
-          setFilter(
-            updatedData.filter((item) => item.category?.name === category)
-          );
-        }
-
+        setFilter(
+          category === "All"
+            ? updatedData
+            : updatedData.filter((item) => item.category?.name === category)
+        );
         toast.success("Product deleted successfully");
       } catch (error) {
         toast.error(error.response?.data?.message || "Error deleting product");
@@ -107,7 +107,7 @@ const ProductListAdmin = () => {
     }
   };
 
-  // ✅ Skeleton loader
+  // ✅ Skeleton Loader
   const Loading = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 animate-pulse">
       {Array.from({ length: 8 }).map((_, index) => (
@@ -122,7 +122,7 @@ const ProductListAdmin = () => {
     </div>
   );
 
-  // ✅ Render approved products
+  // ✅ Product Display Section
   const ShowProducts = () => (
     <>
       {/* Category Filter */}
@@ -166,7 +166,7 @@ const ProductListAdmin = () => {
             key={product._id}
             className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition overflow-hidden relative flex flex-col h-full group border border-gray-200"
           >
-            {/* Delete button on hover */}
+            {/* Delete Button */}
             <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => deleteProduct(product._id)}
@@ -228,10 +228,15 @@ const ProductListAdmin = () => {
     </>
   );
 
+  // // ✅ Display Preloader for 2 seconds before showing content
+  // if (showPreloader) {
+  //   return <Preloader />;
+  // }
+
   return (
     <PageContainer>
       <section>
-        <h2 className="text-5xl font-extrabold text-center mb-12 text-gray-900">
+        <h2 className="text-5xl font-extrabold text-center mb-12 text-gray-100">
           ✅ Approved Product List
         </h2>
         {loading ? <Loading /> : <ShowProducts />}
